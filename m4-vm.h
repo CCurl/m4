@@ -2,7 +2,7 @@
 
 #ifndef __M4_H__
 
-#define VERSION         20260304
+#define VERSION         20260915
 
 #ifdef _MSC_VER
     #define _CRT_SECURE_NO_WARNINGS
@@ -49,7 +49,7 @@ extern void m4Init();
 extern int nextWord();
 extern DE_T *addToDict(const char *w);
 extern void compileNum(cell n);
-extern cell state, outputFp;
+extern cell state, outputFp, last;
 extern char mem[];
 
 // m4-vm.c needs these to be defined
@@ -58,7 +58,6 @@ extern void emit(const char ch);
 extern int  key();
 extern int  qKey();
 extern cell timer();
-extern void ms(cell sleepForMS);
 extern cell fOpen(cell name, cell mode);
 extern void fClose(cell fh);
 extern cell fRead(cell buf, cell sz, cell fh);

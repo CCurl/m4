@@ -1,4 +1,4 @@
-\ The default app
+( The default app )
 
 : ll z" ls -l" system ;
 : lg z" lazygit" system ;
@@ -35,7 +35,7 @@
 : f+ ( a b--c ) + ; inline
 : f- ( a b--c ) - ; inline
 
-\ Random numbers
+( Random numbers )
 val seed@   (val) t2
 : seed! ( n-- ) t2 ! ;
 
@@ -49,16 +49,16 @@ val seed@   (val) t2
 : rand-max ( max--n ) random abs swap mod ;
 timer seed!
 
-\ A normal or circular stack
-16 cells var tstk      \ the stack start
-vhere cell - const t9  \ t9 is the stack end
-val tsp@   (val) t1    \ the stack pointer
-: tsp! ( n-- ) t1 ! ;  \ set the stack pointer
-tstk tsp!              \ Initialize
-\ for a normal stack, use these definitions
-\ : tsp++ ( -- ) tsp@ cell + t9   min tsp! ;
-\ : tsp-- ( -- ) tsp@ cell - tstk max tsp! ;
-\ for a circular stack, use these definitions
+( A normal or circular stack )
+16 cells var tstk      ( the stack start )
+vhere cell - const t9  ( t9 is the stack end )
+val tsp@   (val) t1    ( the stack pointer )
+: tsp! ( n-- ) t1 ! ;  ( set the stack pointer )
+tstk tsp!              ( Initialize )
+( for a normal stack, use these definitions )
+( : tsp++ [ -- ] tsp@ cell + t9   min tsp! ; )
+( : tsp-- [ -- ] tsp@ cell - tstk max tsp! ; )
+( for a circular stack, use these definitions )
 : tsp++ ( -- )  tsp@ cell +  dup t9   > if drop tstk then tsp! ;
 : tsp-- ( -- )  tsp@ cell -  dup tstk < if drop t9   then tsp! ;
 : t!    ( n-- ) tsp@ ! ;

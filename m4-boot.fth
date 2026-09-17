@@ -7,8 +7,6 @@
 : inline    ( -- ) $40 last cell + 1 + c! ;
 : immediate ( -- ) $80 last cell + 1 + c! ;
 : cells  ( n--n' ) cell * ; inline
-: 2cells ( --n )  2 cells ; inline
-: 3cells ( --n )  3 cells ; inline
 : ->code ( off--addr ) cells mem + ;
 : code@  ( off--dw )  ->code @ ;
 : code!  ( dw off-- ) ->code ! ;
@@ -55,7 +53,7 @@ vars (vh) !
 
 ( A stack for 3 locals - x,y,z )
 30 cells var t8           ( t8: the locals stack start )
-vhere 3cells - const t9   ( t9: the locals stack end )
+vhere 3 cells - const t9   ( t9: the locals stack end )
 val x0     (val) t1       ( x0: address of x, t1: address of x0 )
 val y0     (val) t2       ( y0: address of y, t2: address of y0 )
 val z0     (val) t3       ( z0: address of z, t3: address of z0 )
@@ -66,8 +64,8 @@ t8 t7  ( Initialize )
 : y@ ( --n ) y0 @ ;      : y! ( n-- ) y0 ! ;
 : z@ ( --n ) z0 @ ;      : z! ( n-- ) z0 ! ;
 
-: +L  ( -- )  z0 t9 < if x0 3cells + t7 then ;
-: -L  ( -- )  x0 t8 > if x0 3cells - t7 then ;
+: +L  ( -- )  z0 t9 < if x0 3 cells + t7 then ;
+: -L  ( -- )  x0 t8 > if x0 3 cells - t7 then ;
 : +L1 ( x -- )    +L x! ;
 : +L2 ( x y-- )   +L y! x! ;
 : +L3 ( x y z-- ) +L z! y! x! ;
@@ -191,6 +189,7 @@ cell var (buf)
 cell var t4   cell var t5
 : [[ here t4 !  vhere t5 !  1 state ! ;
 : ]] (exit) , 0 state ! t4 @ dup >r (h) ! t5 @ (vh) ! ; immediate
+: ms ( ms-- ) timer + begin timer over > until drop ;
 
 ( Strings / Memory )
 : pad    ( --a ) vhere $100 + ;
@@ -198,7 +197,7 @@ cell var t4   cell var t5
 : cmove  ( f t n-- )  +L3  z@ if  z@ for c@x+ c!y+ next then -L ;
 : cmove> ( f t n-- )  +L3  y@ z@ + 1- y!  x@ z@ + 1- x!  z@ for c@x- c!y- next -L ;
 : s-len  ( str--len ) +L1 0 begin c@x+ if0 -L exit then 1+ again ;
-: s-end  ( str--end ) dup s-len + ;   \ end: address of the null
+: s-end  ( str--end ) dup s-len + ;   ( end: address of the null )
 : s-cpy  ( dst src--dst ) 2dup s-len 1+ cmove ;
 : s-cat  ( dst src--dst ) over s-end  over s-len 1+  cmove ;
 : s-scat ( src dst--dst ) swap s-cat ;
@@ -210,7 +209,7 @@ cell var t4   cell var t5
 ( Disk: 64 blocks, 16K bytes each )
 : kb ( n--m ) 1024 * ;
 : mb ( n--m ) kb kb ;
-mem 14 mb + const disk
+mem mem-sz 2 mb - + const disk
 32 var fn
 val blk@   (val) t0
 : #blks     ( --n )   64 ;

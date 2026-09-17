@@ -2,7 +2,7 @@
 
 m4 is an extremely minimal Forth system that can run stand-alone or be embedded into another program.
 
-m4 has 32 base primitives, 14 system primitives.<br/>
+m4 has 32 base primitives, 13 system primitives.<br/>
 m4 is implemented in 3 files: (m4-vm.c, m4-vm.h, system.c). <br/>
 The VM itself is under 200 lines of code.
 
@@ -97,11 +97,10 @@ On startup, m4 does the following:
 |  38       | fclose   | (fh--)       | Close file TOS. Discard TOS. |
 |  39       | fread    | (a sz fh--n) | Read NOS chars from file TOS to a. |
 |  40       | fwrite   | (a sz fh--n) | Write NOS chars from file TOS from a. |
-|  41       | ms       | (n--)        | Wait/sleep for TOS milliseconds |
-|  42       | timer    | (--n)        | Push the current system time. |
-|  43       | add-word | (--)         | Add the next word to the dictionary. |
-|  44       | outer    | (a--)        | Run the outer interpreter on TOS. Discard TOS. |
-|  45       | system   | (a--)        | Execute system(TOS). Discard TOS. |
+|  41       | timer    | (--n)        | Push the current system time. |
+|  42       | add-word | (--)         | Add the next word to the dictionary. |
+|  43       | outer    | (a--)        | Run the outer interpreter on TOS. Discard TOS. |
+|  44       | system   | (a--)        | Execute system(TOS). Discard TOS. |
 
 ## Other built-in words
 
