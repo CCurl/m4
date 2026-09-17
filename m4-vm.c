@@ -94,7 +94,7 @@ int isNum(const char *w, cell b) {
 	if ((b == 10) && (w[0] == '-')) { isNeg = 1; ++w; }
 	if (w[0] == 0) { return 0; }
 	while (*w) {
-		char c = *w++; if (c >= 'A' && c <= 'Z') c += 32;
+		char c = *w++; if (btwi(c,'A','Z')) c += 32;
 		int val = btwi(c,'0','9') ? c-'0' : btwi(c,'a','f') ? c-'a'+10 : -1;
 		if (btwi(val, 0, b-1)) { n=(n*b)+val; } else { return 0; }
 	}
@@ -107,7 +107,7 @@ DE_T *addToDict(const char *w) {
 	if (isTmpW(w)) { DE_T *x = &tmpWords[w[1]-'0']; x->xt = here; return x; }
 	int ln = strlen(w);
 	if (ln == 0) { return (DE_T*)0; }
-	byte sz = CELL_SZ + 3 + ln + 1; // xt, sz, fl, ln, name[], null
+	byte sz = CELL_SZ + 4 + ln; // xt, sz, fl, ln, name[], null
 	while (sz & 0x03) { ++sz; }
 	last -= sz;
 	DE_T *dp = (DE_T*)last;
@@ -143,9 +143,9 @@ void outer(const char *src) {
 	char *svIn = toIn;
 	toIn = (char *)src;
 	while (nextWord() && (state != BYE)) {
-		if (strEqI(wd, "("))  { while (nextWord() && !strEqI(wd, ")")) {} continue; }
-		if (strEqI(wd, ";"))  { state=INTERPRET; comma(EXIT); continue; }
+		if (strEqI(wd, "("))  { while (nextWord() && !strEqI(wd,")")) {} continue; }
 		if (strEqI(wd, ":"))  { state=COMPILE; addToDict(0); continue; }
+		if (strEqI(wd, ";"))  { state=INTERPRET; comma(EXIT); continue; }
 		if (isNum(wd, base))  { if (state==COMPILE) { compileNum(pop()); } continue; }
 		DE_T *dp = findInDict(wd);
 		if (!dp) { compileErr(wd); state=INTERPRET; break; }

@@ -59,7 +59,7 @@
 	}
 #endif // Linux, OpenBSD, FreeBSD
 
-char tib[128], fn[32];
+char fn[32];
 void zType(const char *str) { fputs(str, outputFp ? (FILE*)outputFp : stdout); }
 void emit(const char ch) { fputc(ch, outputFp ? (FILE*)outputFp : stdout); }
 
@@ -70,6 +70,7 @@ cell fWrite(cell buf, cell sz, cell fh) { return (cell)fwrite((char*)buf, 1, sz,
 cell bootFn(char *f) { sprintf(fn, "%sm4-boot.fth", f); return (cell)fn; }
 
 void repl() {
+	char *tib = (char*)(last-1024);
 	ttyMode(0);
 	if (state != COMPILE) { state = INTERPRET; }
 	zType((state == COMPILE) ? " ... "  : " ok\n");
@@ -94,6 +95,7 @@ void boot(const char *fn) {
 
 int main(int argc, char *argv[]) {
 	m4Init();
+	char *tib = (char*)(last-1024);
 	addLit("argc", (cell)argc);
 	strcpy(tib, "argX");
 	for (int i=0; (i<argc) && (i<10); i++) {

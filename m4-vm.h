@@ -49,7 +49,7 @@ extern void m4Init();
 extern int nextWord();
 extern DE_T *addToDict(const char *w);
 extern void compileNum(cell n);
-extern cell state, outputFp;
+extern cell state, outputFp, last;
 extern char mem[];
 
 // m4-vm.c needs these to be defined
