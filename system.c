@@ -8,7 +8,7 @@
 	int qKey() { return _kbhit(); }
 	int key() { return _getch(); }
 	void ttyMode(int isRaw) {}
-	void ms(cell sleepForMS) { Sleep((DWORD)sleepForMS); }
+	cell timer() { return (cell)clock(); }
 #endif
 
 // Support for Linux, OpenBSD, FreeBSD
@@ -16,6 +16,7 @@
 	#include <termios.h>
 	#include <unistd.h>
 	#include <sys/time.h>
+	#include <time.h>
 
 	void ttyMode(int isRaw) {
 		static struct termios origt, rawt;
@@ -51,13 +52,14 @@
 		int x = fgetc(stdin);
 		return x;
 	}
-	void ms(cell sleepForMS) {
-		if (sleepForMS > 0) { usleep(sleepForMS * 1000); }
+	cell timer() {
+		struct timespec ts;
+		clock_gettime(CLOCK_REALTIME, &ts);
+		return (cell)(ts.tv_sec * 1000 + ts.tv_nsec / 1000000);
 	}
 #endif // Linux, OpenBSD, FreeBSD
 
 char tib[128], fn[32];
-cell timer() { return (cell)clock(); }
 void zType(const char *str) { fputs(str, outputFp ? (FILE*)outputFp : stdout); }
 void emit(const char ch) { fputc(ch, outputFp ? (FILE*)outputFp : stdout); }
 
@@ -86,7 +88,7 @@ void boot(const char *fn) {
 		outer(tib);
 	} else {
 		zType("WARNING: unable to open source file!\n");
-		zType("If no filename is provided, the default is 'boot.fth'\n");
+		zType("If no filename is provided, the default is 'm4-boot.fth'\n");
 	}
 }
 
