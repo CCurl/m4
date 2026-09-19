@@ -2,7 +2,7 @@
 
 m4 is an extremely minimal Forth system that can run stand-alone or be embedded into another program.
 
-m4 has 32 base primitives, 13 system primitives.<br/>
+m4 has 32 base primitives and 13 system primitives (#0-44).<br/>
 m4 is implemented in 3 files: (m4-vm.c, m4-vm.h, system.c). <br/>
 The VM itself is 163 lines of code.
 
@@ -11,7 +11,7 @@ On a Linux box, it is about 20k.
 
 **m4** is a DWord-Code system, inspired by Tachyon. <br/>
 In a m4 program, each instruction is a DWORD (32-bits). <br/>
-- If <= the last primitive (45), then it is a primitive.
+- If <= the last primitive (44), then it is a primitive.
 - Else, it is the XT (code address) of a word in the dictionary.
 
 ### m4 hard-codes the following IMMEDIATE state-change words:
