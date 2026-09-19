@@ -52,20 +52,20 @@ vars (vh) !
 : var   ( n-- ) vhere const allot ;
 
 ( A stack for 3 locals - x,y,z )
-30 cells var t8           ( t8: the locals stack start )
-vhere 3 cells - const t9   ( t9: the locals stack end )
-val x0     (val) t1       ( x0: address of x, t1: address of x0 )
-val y0     (val) t2       ( y0: address of y, t2: address of y0 )
-val z0     (val) t3       ( z0: address of z, t3: address of z0 )
-: t7 ( a-- ) dup t1 ! cell + dup t2 ! cell + t3 ! ;
-t8 t7  ( Initialize )
+30 cells var loc-stk       ( loc-stk: the locals stack start )
+vhere 3 cells - const lse  ( lse: the locals stack end )
+val x0     (val) @@x       ( x0: address of x, @@x: address of x0 )
+val y0     (val) @@y       ( y0: address of y, @@y: address of y0 )
+val z0     (val) @@z       ( z0: address of z, @@z: address of z0 )
+: xyz! ( a-- ) dup @@x ! cell + dup @@y ! cell + @@z ! ;
+loc-stk xyz!               ( Initialize )
 
 : x@ ( --n ) x0 @ ;      : x! ( n-- ) x0 ! ;
 : y@ ( --n ) y0 @ ;      : y! ( n-- ) y0 ! ;
 : z@ ( --n ) z0 @ ;      : z! ( n-- ) z0 ! ;
 
-: +L  ( -- )  z0 t9 < if x0 3 cells + t7 then ;
-: -L  ( -- )  x0 t8 > if x0 3 cells - t7 then ;
+: +L  ( -- )  z0 lse < if x0 3 cells + xyz! then ;
+: -L  ( -- )  x0 loc-stk > if x0 3 cells - xyz! then ;
 : +L1 ( x -- )    +L x! ;
 : +L2 ( x y-- )   +L y! x! ;
 : +L3 ( x y z-- ) +L z! y! x! ;
@@ -84,7 +84,7 @@ t8 t7  ( Initialize )
 
 ( Strings )
 : compiling? ( --n ) state @ 1 = ;
-: t3 ( --a ) +L vhere dup z! x! 1 >in +!
+: (") ( --a ) +L vhere dup z! x! 1 >in +!
     begin
         >in @ c@ y! 1 >in +!
         y@ 0 = y@ '"' = or
@@ -95,8 +95,8 @@ t8 t7  ( Initialize )
         y@ c!x+
     again ;
 
-: z" ( "string"--addr ) t3 ; immediate
-: ." ( "string"-- ) t3 compiling? if (ztype) , exit then ztype ; immediate
+: z" ( "string"--addr ) (") ; immediate
+: ." ( "string"-- ) (") compiling? if (ztype) , exit then ztype ; immediate
 
 ( Files )
 : fopen-r   ( nm--fh ) z" rb" fopen ;
@@ -106,14 +106,13 @@ t8 t7  ( Initialize )
 : ->stdout! ( -- )     output-fp @ fclose ->stdout ;
 
 ( reboot )
-: t4 50000 ;
-: t5 vars t4 + ;
+: rbb vars y@ + ;
 : rb ( -- )
     z" m4-boot.fth" fopen-r -if0 drop ." m4-boot.fth not found" exit then
-    z! t5 x! t4 for 0 c!x+ next
-    t5 t4 z@ fread drop z@ fclose
+    z!  50000 y!  rbb x!  y@ for 0 c!x+ next
+    rbb y@ z@ fread drop z@ fclose
     -here- (h) !  -last- (l) ! 
-    t5 >in ! ;
+    rbb >in ! ;
 : vi z" vi m4-boot.fth" system ;
 
 ( More core words )
@@ -211,17 +210,17 @@ cell var t4   cell var t5
 : mb ( n--m ) kb kb ;
 mem mem-sz 2 mb - + const disk
 32 var fn
-val blk@   (val) t0
+val blk@   (val) (blk)
 : #blks     ( --n )   64 ;
 : blk-sz    ( --n )   16 kb ;
-: blk!      ( n-- )   0 max #blks 1- min t0 ! ;
+: blk!      ( n-- )   0 max #blks 1- min (blk) ! ;
 : blk-fn    ( --a )   fn z" block-" s-cpy blk@ <# # #s #> s-cat z" .fth" s-cat ;
 : blk-addr  ( --a )   blk@ blk-sz * disk + ;
 : blk-clr   ( -- )    blk-addr blk-sz 0 fill ;
-: t2        ( fh-- )  >r  blk-clr  blk-addr blk-sz r@ fread drop  r> fclose ;
-: blk-read  ( -- )    blk-fn fopen-r ?dup if0 ." file " blk-fn ztype ."  not found." drop exit then t2 ;
-: t1        ( fh-- )  >r  blk-addr blk-sz r@ fwrite drop  r> fclose ;
-: blk-write ( -- )    blk-fn fopen-w ?dup if0 ." -err-" drop exit then t1 ;
+: brd       ( fh-- )  >r  blk-clr  blk-addr blk-sz r@ fread drop  r> fclose ;
+: blk-read  ( -- )    blk-fn fopen-r ?dup if0 ." file " blk-fn ztype ."  not found." drop exit then brd ;
+: bwt       ( fh-- )  >r  blk-addr blk-sz r@ fwrite drop  r> fclose ;
+: blk-write ( -- )    blk-fn fopen-w ?dup if0 ." -err-" drop exit then bwt ;
 : blk-nullt ( -- )    0 blk-addr blk-sz + 1- c! ;
 : load      ( n-- )   blk! blk-read blk-nullt blk-addr outer ;
 : load-next ( n-- )   blk! blk-read blk-nullt blk-addr >in ! ;

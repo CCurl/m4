@@ -2,10 +2,6 @@
 
 #include "m4-vm.h"
 
-#define X1(op, name, theCode) op,
-#define X2(op, name, theCode) case op: theCode goto next;
-#define X3(op, name, theCode) { name, op },
-
 #define PRIMS(X) \
 	X(EXIT,   "exit",     pc = (ucell)rpop(); if (pc==0) { return; } ) \
 	X(LIT,    "",         push(code[pc++]); ) \
@@ -49,9 +45,13 @@
 	X(fREAD,  "fread",    t = pop(); n = pop(); TOS = fRead(TOS, n, t); ) \
 	X(fWRITE, "fwrite",   t = pop(); n = pop(); TOS = fWrite(TOS, n, t); ) \
 	X(TIMER,  "timer",    push(timer()); ) \
-	X(ADDW,   "add-word", addToDict(0); ) \
+	X(ADDW,   "add-word", addToDict((char *)0); ) \
 	X(OUTER,  "outer",    outer((char*)pop()); ) \
 	X(SYS,    "system",   system((char*)pop()); )
+
+#define X1(op, name, theCode) op,
+#define X2(op, name, theCode) case op: theCode goto next;
+#define X3(op, name, theCode) { name, op },
 
 enum { PRIMS(X1) HERE_START };
 
@@ -59,21 +59,16 @@ char mem[MEM_SZ], *toIn, wd[32];
 ucell *code=(ucell*)&mem[0], dsp, rsp, lsp;
 cell dstk[STK_SZ+1], rstk[STK_SZ+1], lstk[STK_SZ+1], outputFp=0;
 cell here=HERE_START, last=(cell)&mem[MEM_SZ], base=10, state=INTERPRET;
-DE_T tmpWords[10];
 
 void push(cell v) { if (dsp < STK_SZ) { dstk[++dsp] = v; } }
 cell pop() { return (0 < dsp) ? dstk[dsp--] : 0; }
 void rpush(cell v) { if (rsp < STK_SZ) { rstk[++rsp] = v; } }
 cell rpop() { return (0 < rsp) ? rstk[rsp--] : 0; }
 void comma(ucell val) { code[here++] = val; }
-void doInline(ucell xt) { while (code[xt] != EXIT) { comma(code[xt++]); } }
-int  isTmpW(const char *w) { return (w[0]=='t') && btwi(w[1],'0','9') && (w[2]==0) ? 1 : 0; }
 void addPrim(const char *nm, ucell op) { DE_T *dp = addToDict(nm); if (dp) { dp->xt = op; } }
 void doInterp(ucell xt) { code[10]=xt; code[11]=EXIT; inner(10); }
 char *checkWord(char *w) { return w ? w : (nextWord() ? &wd[0] : NULL); }
-void lit1(cell n) { comma((ucell)(n | LIT_MASK)); }
-void lit2(cell n) { comma(LIT); comma(n); }
-void compileNum(cell n) { if (btwi(n,0,LIT_BITS)) { lit1(n); } else { lit2(n); } }
+void compileNum(cell n) { comma(LIT); comma(n); }
 void compileErr(char *w) { zType("\n-word:["); zType(w); zType("]?-\n"); }
 void addLit(const char *name, cell val) { addToDict(name); compileNum(val); comma(EXIT); }
 
@@ -104,7 +99,6 @@ int isNum(const char *w, cell b) {
 
 DE_T *addToDict(const char *w) {
 	w = checkWord((char*)w);
-	if (isTmpW(w)) { DE_T *x = &tmpWords[w[1]-'0']; x->xt = here; return x; }
 	int ln = strlen(w);
 	if (ln == 0) { return (DE_T*)0; }
 	byte sz = CELL_SZ + 4 + ln; // xt, sz, fl, ln, name[], null
@@ -118,7 +112,6 @@ DE_T *addToDict(const char *w) {
 
 DE_T *findInDict(char *w) {
 	w = checkWord((char*)w);
-	if (isTmpW(w)) { return &tmpWords[w[1]-'0']; }
 	int ln = strlen(w);
 	for (DE_T *dp=(DE_T*)last; dp<(DE_T*)&mem[MEM_SZ]; dp=(DE_T*)((cell)dp+dp->sz)) {
 		if ((dp->ln == ln) && (strEqI(dp->nm, w))) { return dp; }
@@ -131,12 +124,10 @@ void inner(ucell pc) {
 next: ir = code[pc++];
 	switch (ir)	{
 		PRIMS(X2)
-	default:
-		if ((ir & LIT_MASK) == LIT_MASK) { push(ir & LIT_BITS); goto next; }
-		if (code[pc] != EXIT) { rpush(pc); }
-		pc = ir;
-		goto next;
 	}
+	if (code[pc] != EXIT) { rpush(pc); }
+	pc = ir;
+	goto next;
 }
 
 void outer(const char *src) {
@@ -150,7 +141,7 @@ void outer(const char *src) {
 		DE_T *dp = findInDict(wd);
 		if (!dp) { compileErr(wd); state=INTERPRET; break; }
 		if ((state == INTERPRET) || (dp->fl & IMMED)) { doInterp(dp->xt); }
-		else { (dp->fl & INLINE) ? doInline(dp->xt) : comma(dp->xt); } // COMPILE
+		else { comma(dp->xt); } // COMPILE
 	}
 	toIn = svIn;
 }

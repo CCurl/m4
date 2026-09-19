@@ -4,15 +4,14 @@ m4 is an extremely minimal Forth system that can run stand-alone or be embedded 
 
 m4 has 32 base primitives, 13 system primitives.<br/>
 m4 is implemented in 3 files: (m4-vm.c, m4-vm.h, system.c). <br/>
-The VM itself is under 200 lines of code.
+The VM itself is 163 lines of code.
 
 On Windows, a 32-bit Release build compiles to a 17k executable. <br/>
-On a Linux box, it is about 21k.
+On a Linux box, it is about 20k.
 
 **m4** is a DWord-Code system, inspired by Tachyon. <br/>
 In a m4 program, each instruction is a DWORD (32-bits). <br/>
 - If <= the last primitive (45), then it is a primitive.
-- Else, if the top 3 bits are set, then it is a literal ANDed with $3FFFFFFF.
 - Else, it is the XT (code address) of a word in the dictionary.
 
 ### m4 hard-codes the following IMMEDIATE state-change words:
@@ -23,20 +22,7 @@ In a m4 program, each instruction is a DWORD (32-bits). <br/>
 |  ;   | Compile EXIT and change state to INTERPRET. |
 
 **NOTE**: '(' skip words until the next ')' word.<br/>
-**NOTE**: '\\' skip words until the end of the line.<br/>
 **NOTE**: State '999' signals m4 to exit.<br/>
-
-## INLINE words
-
-An INLINE word is somewhat similar to a macro in other languages.<br/>
-When a word is INLINE, its definition is copied to the target, up to the first `exit`.<br/>
-When not INLINE, a call is made to the word instead.
-
-## Transient words
-
-Words 't0' through 't9' are transient and are not added to the dictionary.<br/>
-They are case sensitive: 't0' is a transient word, 'T0' is not.<br/>
-They help with factoring code and and keep the dictionary uncluttered.<br/>
 
 ## m4 Startup Behavior
 
@@ -46,8 +32,8 @@ On startup, m4 does the following:
 - E.G. "arg0 ztype" will print `m4`
 - Try to find a boot file to load:
   - If arg1 names a file that can be opened, load that file.
-  - Else If "m4-boot.fth" exists and can be opened, load that.
-  - Else If "`BIN_DIR`m4-boot.fth" exists and can be opened, load that.
+  - Else If "./m4-boot.fth" exists and can be opened, load that.
+  - Else If "[BIN_DIR]/m4-boot.fth" exists and can be opened, load that.
   - NOTE: `BIN_DIR` is defined in the `m4-vm.h` file. Change that as necessary.
 
 ## The VM Primitives
