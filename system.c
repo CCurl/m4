@@ -5,7 +5,7 @@
 #ifdef IS_WINDOWS
 	#include <windows.h>
 	#include <conio.h>
-	int qKey() { return _kbhit(); }
+	int qKey() { return _kbhit() ? -1 : 0; }
 	int key() { return _getch(); }
 	void ttyMode(int isRaw) {}
 	cell timer() { return (cell)clock(); }
@@ -45,7 +45,7 @@
 		FD_SET(STDIN_FILENO, &rdfs);
 		select(STDIN_FILENO+1, &rdfs, NULL, NULL, &tv);
 		int x = FD_ISSET(STDIN_FILENO, &rdfs);
-		return x;
+		return x ? -1 : 0;
 	}
 	int key() {
 		ttyMode(1);

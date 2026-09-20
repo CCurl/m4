@@ -25,9 +25,9 @@
 	X(ADD,    "+",        t = pop(); TOS += t; ) \
 	X(SUB,    "-",        t = pop(); TOS -= t; ) \
 	X(SLMOD,  "/mod",     t = TOS; n = NOS; TOS = n/t; NOS = n%t; ) \
-	X(LT,     "<",        t = pop(); TOS = (TOS  < t) ? 1 : 0; ) \
-	X(EQ,     "=",        t = pop(); TOS = (TOS == t) ? 1 : 0; ) \
-	X(GT,     ">",        t = pop(); TOS = (TOS  > t) ? 1 : 0; ) \
+	X(LT,     "<",        t = pop(); TOS = (TOS  < t) ? -1 : 0; ) \
+	X(EQ,     "=",        t = pop(); TOS = (TOS == t) ? -1 : 0; ) \
+	X(GT,     ">",        t = pop(); TOS = (TOS  > t) ? -1 : 0; ) \
 	X(PLSTO,  "+!",       t = pop(); n = pop(); *(cell *)t += n; ) \
 	X(FOR,    "for",      lsp += 3; L0 = 0; L1 = pop(); L2 = pc; ) \
 	X(I,      "i",        push(L0); ) \
@@ -154,8 +154,8 @@ void m4Init() {
 		{ "(lsp)",   (cell)&lsp },     { "lstk",      (cell)&lstk[0] },
 		{ "(rsp)",   (cell)&rsp },     { "rstk",      (cell)&rstk[0] },
 		{ "(sp)",    (cell)&dsp },     { "stk",       (cell)&dstk[0] },
-		{ "state",   (cell)&state },   { "base",      (cell)&base },
 		{ "mem",     (cell)&mem[0] },  { "mem-sz",    (cell)MEM_SZ },
+		{ "state",   (cell)&state },   { "base",      (cell)&base },
 		{ ">in",     (cell)&toIn},     { "cell",      (cell)CELL_SZ },  { 0, 0 }
 	};
 	for (int i = 0; nv[i].name; i++) { addLit(nv[i].name, nv[i].value); }
