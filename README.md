@@ -2,17 +2,16 @@
 
 m4 is an extremely minimal Forth system that can run stand-alone or be embedded into another program.
 
-m4 has 32 base primitives, 14 system primitives.<br/>
+m4 has 32 core primitives and 13 system primitives (#0-44).<br/>
 m4 is implemented in 3 files: (m4-vm.c, m4-vm.h, system.c). <br/>
-The VM itself is under 200 lines of code.
+The VM itself is 163 lines of code.
 
 On Windows, a 32-bit Release build compiles to a 17k executable. <br/>
-On a Linux box, it is about 21k.
+On a Linux box, it is about 20k.
 
 **m4** is a DWord-Code system, inspired by Tachyon. <br/>
 In a m4 program, each instruction is a DWORD (32-bits). <br/>
-- If <= the last primitive (45), then it is a primitive.
-- Else, if the top 3 bits are set, then it is a literal ANDed with $3FFFFFFF.
+- If <= the last primitive (44), then it is a primitive.
 - Else, it is the XT (code address) of a word in the dictionary.
 
 ### m4 hard-codes the following IMMEDIATE state-change words:
@@ -23,20 +22,7 @@ In a m4 program, each instruction is a DWORD (32-bits). <br/>
 |  ;   | Compile EXIT and change state to INTERPRET. |
 
 **NOTE**: '(' skip words until the next ')' word.<br/>
-**NOTE**: '\\' skip words until the end of the line.<br/>
-**NOTE**: State '999' signals m4 to exit.<br/>
-
-## INLINE words
-
-An INLINE word is somewhat similar to a macro in other languages.<br/>
-When a word is INLINE, its definition is copied to the target, up to the first `exit`.<br/>
-When not INLINE, a call is made to the word instead.
-
-## Transient words
-
-Words 't0' through 't9' are transient and are not added to the dictionary.<br/>
-They are case sensitive: 't0' is a transient word, 'T0' is not.<br/>
-They help with factoring code and and keep the dictionary uncluttered.<br/>
+**NOTE**: State '999' signals m4 to exit. `: bye 999 state ! ;`<br/>
 
 ## m4 Startup Behavior
 
@@ -46,15 +32,15 @@ On startup, m4 does the following:
 - E.G. "arg0 ztype" will print `m4`
 - Try to find a boot file to load:
   - If arg1 names a file that can be opened, load that file.
-  - Else If "m4-boot.fth" exists and can be opened, load that.
-  - Else If "`BIN_DIR`m4-boot.fth" exists and can be opened, load that.
+  - Else If "./m4-boot.fth" exists and can be opened, load that.
+  - Else If "[BIN_DIR]/m4-boot.fth" exists and can be opened, load that.
   - NOTE: `BIN_DIR` is defined in the `m4-vm.h` file. Change that as necessary.
 
 ## The VM Primitives
 
 | Primitive | Op/Word  | Stack        | Description |
 |:--        |:--       |:--           |:-- |
-|           |          |              | --- **m4 primitives** --- |
+|           |          |              | --- **Core primitives** --- |
 |   0       | exit     | (--)         | PC = R-TOS. Discard R-TOS. If (PC=0) then stop. |
 |   1       | lit      | (--)         | Push code[PC]. Increment PC. |
 |   2       | jmp      | (--)         | PC = code[PC]. |
@@ -77,13 +63,13 @@ On startup, m4 does the following:
 |  19       | +        | (a b--c)     | TOS = NOS+TOS. Discard NOS. |
 |  20       | -        | (a b--c)     | TOS = NOS-TOS. Discard NOS. |
 |  21       | /mod     | (a b--r q)   | TOS = NOS/TOS. NOS = NOS modulo TOS. |
-|  22       | <        | (a b--f)     | If (NOS<TOS) then TOS = 1 else TOS = 0. Discard NOS. |
-|  23       | =        | (a b--f)     | If (NOS=TOS) then TOS = 1 else TOS = 0. Discard NOS. |
-|  24       | >        | (a b--f)     | If (NOS<TOS) then TOS = 1 else TOS = 0. Discard NOS. |
+|  22       | <        | (a b--f)     | If (NOS<TOS) then TOS = -1 else TOS = 0. Discard NOS. |
+|  23       | =        | (a b--f)     | If (NOS=TOS) then TOS = -1 else TOS = 0. Discard NOS. |
+|  24       | >        | (a b--f)     | If (NOS<TOS) then TOS = -1 else TOS = 0. Discard NOS. |
 |  25       | +!       | (n a--)      | Add NOS to the cell at TOS. Discard TOS and NOS. |
-|  26       | for      | (C--)        | Start a FOR loop starting at 0. Upper limit is C. |
+|  26       | for      | (N--)        | Start a FOR loop starting at 0. Upper limit is N. |
 |  27       | i        | (--I)        | Push current loop index. |
-|  28       | next     | (--)         | Increment I. If I < C then jump to loop start. |
+|  28       | next     | (--)         | Increment I. If I < N then jump to loop start. |
 |  29       | and      | (a b--c)     | TOS = NOS and TOS. Discard NOS. |
 |  30       | or       | (a b--c)     | TOS = NOS or  TOS. Discard NOS. |
 |  31       | xor      | (a b--c)     | TOS = NOS xor TOS. Discard NOS. |
@@ -91,17 +77,16 @@ On startup, m4 does the following:
 |  32       | ztype    | (a--)        | Output null-terminated string TOS. Discard TOS. |
 |  33       | find     | (--a)        | Push the dictionary address of the next word. |
 |  34       | key      | (--n)        | Push the next keypress. Wait if necessary. |
-|  35       | key?     | (--f)        | Push 1 if a keypress is available, else 0. |
+|  35       | key?     | (--f)        | Push -1 if a keypress is available, else 0. |
 |  36       | emit     | (c--)        | Output char TOS. Discard TOS. |
 |  37       | fopen    | (nm md--fh)  | Open file NOS using mode TOS (h=0 if error). |
 |  38       | fclose   | (fh--)       | Close file TOS. Discard TOS. |
 |  39       | fread    | (a sz fh--n) | Read NOS chars from file TOS to a. |
 |  40       | fwrite   | (a sz fh--n) | Write NOS chars from file TOS from a. |
-|  41       | ms       | (n--)        | Wait/sleep for TOS milliseconds |
-|  42       | timer    | (--n)        | Push the current system time. |
-|  43       | add-word | (--)         | Add the next word to the dictionary. |
-|  44       | outer    | (a--)        | Run the outer interpreter on TOS. Discard TOS. |
-|  45       | system   | (a--)        | Execute system(TOS). Discard TOS. |
+|  41       | timer    | (--n)        | Push the current system time. |
+|  42       | add-word | (--)         | Add the next word to the dictionary. |
+|  43       | outer    | (a--)        | Run the outer interpreter on TOS. Discard TOS. |
+|  44       | system   | (a--)        | Execute system(TOS). Discard TOS. |
 
 ## Other built-in words
 
@@ -117,10 +102,10 @@ On startup, m4 does the following:
 | rstk      | (--a) | Address of the return stack. |
 | (sp)      | (--a) | Address of the data stack pointer. |
 | stk       | (--a) | Address of the data stack. |
-| state     | (--a) | Address of STATE. |
-| base      | (--a) | Address of BASE. |
 | mem       | (--a) | Address of the beginning of the memory area. |
 | mem-sz    | (--n) | The number of BYTEs in the memory area. |
+| state     | (--a) | Address of STATE. |
+| base      | (--a) | Address of BASE. |
 | >in       | (--a) | Address of the text input buffer pointer. |
 | cell      | (--n) | The number of BYTEs in a CELL. |
 
