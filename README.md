@@ -6,7 +6,7 @@ m4 has 32 core primitives and 13 system primitives (#0-44).<br/>
 m4 is implemented in 3 files: (m4-vm.c, m4-vm.h, system.c). <br/>
 The VM itself is 163 lines of code.
 
-On Windows, a 32-bit Release build compiles to a 17k executable. <br/>
+On Windows, a Release build compiles to a 17k executable. <br/>
 On a Linux box, it is about 20k.
 
 **m4** is a DWord-Code system, inspired by Tachyon. <br/>
