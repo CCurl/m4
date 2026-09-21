@@ -1,26 +1,24 @@
 ( these are created later as -last- and -here- )
 ( they are used later for rebooting )
-(h) @   (l) @ 
+(h) @   (l) @
 
 : last (l) @ ;
 : here (h) @ ;
-: inline    ( -- ) $40 last cell + 1 + c! ;
 : immediate ( -- ) $80 last cell + 1 + c! ;
-: cells  ( n--n' ) cell * ; inline
+: cells  ( n--n' ) cell * ;
 : ->code ( off--addr ) cells mem + ;
 : code@  ( off--dw )  ->code @ ;
 : code!  ( dw off-- ) ->code ! ;
 : , ( dw-- ) here dup 1 + (h) ! code! ;
 
 : bye      ( -- ) 999 state ! ;
-: (exit)   ( --n )  0 ; inline
-: (lit)    ( --n )  1 ; inline
-: (jmp)    ( --n )  2 ; inline
-: (jmpz)   ( --n )  3 ; inline
-: (jmpnz)  ( --n )  4 ; inline
-: (njmpz)  ( --n )  5 ; inline
-: (njmpnz) ( --n )  6 ; inline
-: (ztype)  ( --n ) 32 ; inline
+: (exit)   ( --n )  0 ;
+: (lit)    ( --n )  1 ;
+: (jmp)    ( --n )  2 ;
+: (jmpz)   ( --n )  3 ;
+: (jmpnz)  ( --n )  4 ;
+: (njmpz)  ( --n )  5 ;
+: (njmpnz) ( --n )  6 ;
 
 : if   (jmpz)   , here 0 , ; immediate
 : -if  (njmpz)  , here 0 , ; immediate
@@ -35,7 +33,7 @@
 : until (jmpz)    , , ; immediate
 
 ( val and (val) define a very efficient variable mechanism )
-( Usage:  val a@   (val) (a)   : a! (xx) ! ; )
+( Usage:  val a@   (val) @@a   : a! @@a ! ; )
 : const ( n-- ) add-word (lit) , , (exit) , ;
 :  val  ( -- ) 0 const ;
 : (val) ( -- ) here 2 - ->code const ;
@@ -95,6 +93,7 @@ loc-stk xyz!               ( Initialize )
         y@ c!x+
     again ;
 
+find ztype @ const (ztype)
 : z" ( "string"--addr ) (") ; immediate
 : ." ( "string"-- ) (") compiling? if (ztype) , exit then ztype ; immediate
 
@@ -111,24 +110,24 @@ loc-stk xyz!               ( Initialize )
     z" m4-boot.fth" fopen-r -if0 drop ." m4-boot.fth not found" exit then
     z!  50000 y!  rbb x!  y@ for 0 c!x+ next
     rbb y@ z@ fread drop z@ fclose
-    -here- (h) !  -last- (l) ! 
+    -here- (h) !  -last- (l) !
     rbb >in ! ;
 : vi z" vi m4-boot.fth" system ;
 
 ( More core words )
-: 1+ ( n--n' ) 1 + ; inline
-: 1- ( n--n' ) 1 - ; inline
+: 1+ ( n--n' ) 1 + ;
+: 1- ( n--n' ) 1 - ;
 : [ ( -- ) 0 state ! ; immediate  ( 0 = INTERPRET )
 : ] ( -- ) 1 state ! ;            ( 1 = COMPILE )
-: rdrop ( -- ) r> drop ; inline
-: tuck  ( a b--b a b )   swap over ; inline
-: nip   ( a b--b )       swap drop ; inline
+: rdrop ( -- ) r> drop ;
+: tuck  ( a b--b a b )   swap over ;
+: nip   ( a b--b )       swap drop ;
 : ?dup ( n--n n|0 )  -if dup then ;
-: 2dup  ( a b--a b a b ) over over ; inline
-: 2drop ( a b-- )        drop drop ; inline
+: 2dup  ( a b--a b a b ) over over ;
+: 2drop ( a b-- )        drop drop ;
 : -rot ( a b c--c a b )  swap >r swap r> ;
-: 0= ( n--f ) 0 =    ; inline
-: 0< ( n--f ) 0 <    ; inline
+: 0= ( n--f ) 0 =    ;
+: 0< ( n--f ) 0 <    ;
 : <= ( a b--f ) > 0= ;
 : >= ( a b--f ) < 0= ;
 : type ( a n-- ) for dup c@ emit 1+ next drop ;
@@ -139,8 +138,8 @@ loc-stk xyz!               ( Initialize )
 : tab ( -- )      9 emit ;
 : space  ( -- )  32 emit ;
 : spaces ( n-- ) for space next ;
-: /   ( a b--q ) /mod nip  ; inline
-: mod ( a b--r ) /mod drop ; inline
+: /   ( a b--q ) /mod nip  ;
+: mod ( a b--r ) /mod drop ;
 : */  ( n m q--n' ) >r * r> / ;
 : min ( a b-a|b ) over over > if swap then drop ;
 : max ( a b-a|b ) over over < if swap then drop ;
@@ -174,7 +173,7 @@ cell var (buf)
 : words ( -- ) +L last x! 0 y! 1 z! begin
         x@ dict-end < if0 '(' emit z@ . ." words)" -L exit then
         x@ .word tab z++
-        x@ cell + 2 + c@ 7 > if y++ then 
+        x@ cell + 2 + c@ 7 > if y++ then
         y@+ 12 > if cr 0 y! then
         x@ dup cell + c@ + x!
     again ;
@@ -204,7 +203,7 @@ cell var t4   cell var t5
 : s-catn ( dst num--dst ) <# #s #> s-cat ;
 : s-eqn  ( s1 s2 n--f ) +L3 z@ for c@x+ c@y+ = if0 -L 0 unloop exit then next -L 1 ;
 : s-eq   ( s1 s2--f ) dup s-len 1+ s-eqn ;
-  
+
 ( Disk: 64 blocks, 16K bytes each )
 : kb ( n--m ) 1024 * ;
 : mb ( n--m ) kb kb ;

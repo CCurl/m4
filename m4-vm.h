@@ -23,7 +23,6 @@
 #define MEM_SZ         0x1000000 // 16MB
 #define STK_SZ                63
 #define IMMED               0x80
-#define INLINE              0x40
 #define CELL_SZ                4
 #define byte             uint8_t
 #define cell             int32_t
