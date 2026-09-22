@@ -47,7 +47,7 @@
 	X(TIMER,  "timer",    push(timer()); ) \
 	X(ADDW,   "add-word", addToDict((char *)0); ) \
 	X(OUTER,  "outer",    outer((char*)pop()); ) \
-	X(SYS,    "system",   system((char*)pop()); )
+	X(SYS,    "system",   ttyMode(0); system((char*)pop()); )
 
 #define X1(op, name, theCode) op,
 #define X2(op, name, theCode) case op: theCode goto next;
@@ -69,7 +69,7 @@ void addPrim(const char *nm, ucell op) { DE_T *dp = addToDict(nm); if (dp) { dp-
 void doInterp(ucell xt) { code[10]=xt; code[11]=EXIT; inner(10); }
 char *checkWord(char *w) { return w ? w : (nextWord() ? &wd[0] : NULL); }
 void compileNum(cell n) { comma(LIT); comma(n); }
-void compileErr(char *w) { zType("\n-word:["); zType(w); zType("]?-\n"); }
+void compileErr(char *w) { zType("\r\n-word:["); zType(w); zType("]?\r\n"); }
 void addLit(const char *name, cell val) { addToDict(name); compileNum(val); comma(EXIT); }
 
 int nextWord() {

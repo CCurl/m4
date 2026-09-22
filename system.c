@@ -60,8 +60,8 @@
 #endif // Linux, OpenBSD, FreeBSD
 
 char fn[32];
-void zType(const char *str) { fputs(str, outputFp ? (FILE*)outputFp : stdout); }
 void emit(const char ch) { fputc(ch, outputFp ? (FILE*)outputFp : stdout); }
+void zType(const char *str) { while (*str) { emit(*str++); } }
 
 cell fOpen(cell name, cell mode) { return (cell)fopen((char*)name, (char*)mode); }
 void fClose(cell fh) { fclose((FILE*)fh); }
@@ -69,13 +69,30 @@ cell fRead(cell buf, cell sz, cell fh) { return (cell)fread((char*)buf, 1, sz, (
 cell fWrite(cell buf, cell sz, cell fh) { return (cell)fwrite((char*)buf, 1, sz, (FILE*)fh); }
 cell bootFn(char *f) { sprintf(fn, "%sm4-boot.fth", f); return (cell)fn; }
 
+int getString(char *buf, int sz) {
+	int len = 0;
+	ttyMode(1);
+	while (1) {
+		if (sz <= len) { break; }
+		char c = (char)key();
+		if (c == 3) { state = BYE; len = 0; break; }
+		if (c == 13) { break; }			// Enter
+		if (c == 127) { c = 8; }		// Linux backspace
+		if ((c == 8) && (len > 0)) {	// handle backspace
+			len--; zType("\b \b");
+		}
+		if (btwi(c, 32, 126)) { buf[len++] = c; emit(c); }
+	}
+	buf[len] = '\0';
+	return len;
+}
+
 void repl() {
 	char *tib = (char*)(last-1024);
 	ttyMode(0);
 	if (state != COMPILE) { state = INTERPRET; }
 	zType((state == COMPILE) ? " ... "  : " ok\n");
-	if (fgets(tib, 128, stdin) == tib) { outer(tib); }
-	else { state = BYE; }
+	if (getString(tib, 256)) { emit(32); outer(tib); }
 }
 
 void boot(const char *fn) {
@@ -105,5 +122,6 @@ int main(int argc, char *argv[]) {
 	boot((1<argc) ? argv[1] : 0);
 	while (state != BYE) { repl(); }
 	ttyMode(0);
+	zType("\n");
 	return 0;
 }

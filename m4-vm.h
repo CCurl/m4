@@ -52,6 +52,7 @@ extern char mem[];
 // m4-vm.c needs these to be defined
 extern void zType(const char *str);
 extern void emit(const char ch);
+extern void ttyMode(int isRaw);
 extern int  key();
 extern int  qKey();
 extern cell timer();
