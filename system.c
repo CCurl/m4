@@ -78,7 +78,7 @@ int getString(char *buf, int sz) {
 		if (c == 3) { state = BYE; len = 0; break; }
 		if (c == 13) { break; }			// Enter
 		if (c == 127) { c = 8; }		// Linux backspace
-		if ((c == 8) && (len > 0)) {	// handle backspace
+		if ((c == 8) && (len > 0)) {	// Handle backspace
 			len--; zType("\b \b");
 		}
 		if (btwi(c, 32, 126)) { buf[len++] = c; emit(c); }
@@ -89,9 +89,8 @@ int getString(char *buf, int sz) {
 
 void repl() {
 	char *tib = (char*)(last-1024);
-	ttyMode(0);
 	if (state != COMPILE) { state = INTERPRET; }
-	zType((state == COMPILE) ? " ... "  : " ok\n");
+	zType((state == COMPILE) ? " ... "  : " ok\r\n");
 	if (getString(tib, 256)) { emit(32); outer(tib); }
 }
 
