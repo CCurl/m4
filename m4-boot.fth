@@ -4,8 +4,9 @@
 
 : last (l) @ ;
 : here (h) @ ;
-: immediate ( -- ) $80 last cell + 1 + c! ;
 : cells  ( n--n' ) cell * ;
+: cell+  ( n--n' ) cell + ;
+: immediate ( -- ) $80 last cell+ 1 + c! ;
 : ->code ( off--addr ) cells mem + ;
 : code@  ( off--dw )  ->code @ ;
 : code!  ( dw off-- ) ->code ! ;
@@ -55,7 +56,7 @@ vhere 3 cells - const lse  ( lse: the locals stack end )
 val x0     (val) @@x       ( x0: address of x, @@x: address of x0 )
 val y0     (val) @@y       ( y0: address of y, @@y: address of y0 )
 val z0     (val) @@z       ( z0: address of z, @@z: address of z0 )
-: xyz! ( a-- ) dup @@x ! cell + dup @@y ! cell + @@z ! ;
+: xyz! ( a-- ) dup @@x ! cell+ dup @@y ! cell+ @@z ! ;
 loc-stk xyz!               ( Initialize )
 
 : x@ ( --n ) x0 @ ;      : x! ( n-- ) x0 ! ;
@@ -166,22 +167,22 @@ cell var (buf)
 : 0sp 0 (sp) ! ;
 : depth ( --n ) (sp) @ 1- ;
 : .s '(' emit space depth ?dup if
-        stk swap for cell + dup @ . next drop
+        stk swap for cell+ dup @ . next drop
     then ')' emit ;
 
-: .word ( de-- ) cell + 3 + ztype ;
+: .word ( de-- ) cell+ 3 + ztype ;
 : words ( -- ) +L last x! 0 y! 1 z! begin
         x@ dict-end < if0 '(' emit z@ . ." words)" -L exit then
         x@ .word tab z++
-        x@ cell + 2 + c@ 7 > if y++ then
+        x@ cell+ 2 + c@ 7 > if y++ then
         y@+ 12 > if cr 0 y! then
-        x@ dup cell + c@ + x!
+        x@ dup cell+ c@ + x!
     again ;
 
 : words-n ( n-- ) +L last x! 0 y! for
         x@ .word tab
         y@+ 12 > if cr 0 y! then
-		x@ dup cell + c@ + x!
+		x@ dup cell+ c@ + x!
     next -L ;
 
 cell var t4   cell var t5
@@ -210,21 +211,21 @@ cell var t4   cell var t5
 mem mem-sz 2 mb - + const disk
 32 var fn
 val blk@   (val) (blk)
-: #blks     ( --n )   64 ;
-: blk-sz    ( --n )   16 kb ;
+: #blks     ( --n )   100 ; ( 0 -> 99 )
+: blk-sz    ( --n )   10 kb ;
 : blk!      ( n-- )   0 max #blks 1- min (blk) ! ;
 : blk-fn    ( --a )   fn z" block-" s-cpy blk@ <# # #s #> s-cat z" .fth" s-cat ;
 : blk-addr  ( --a )   blk@ blk-sz * disk + ;
 : blk-clr   ( -- )    blk-addr blk-sz 0 fill ;
-: brd       ( fh-- )  >r  blk-clr  blk-addr blk-sz r@ fread drop  r> fclose ;
-: blk-read  ( -- )    blk-fn fopen-r ?dup if0 ." file " blk-fn ztype ."  not found." drop exit then brd ;
-: bwt       ( fh-- )  >r  blk-addr blk-sz r@ fwrite drop  r> fclose ;
-: blk-write ( -- )    blk-fn fopen-w ?dup if0 ." -err-" drop exit then bwt ;
-: blk-nullt ( -- )    0 blk-addr blk-sz + 1- c! ;
-: load      ( n-- )   blk! blk-read blk-nullt blk-addr outer ;
-: load-next ( n-- )   blk! blk-read blk-nullt blk-addr >in ! ;
+: t0        ( fh-- )  >r  blk-clr  blk-addr blk-sz r@ fread drop  r> fclose ;
+: blk-read  ( -- )    blk-fn fopen-r ?dup if0 blk-fn ztype ."  not found." drop exit then t0 ;
+: t1        ( fh-- )  >r  blk-addr blk-sz r@ fwrite drop  r> fclose ;
+: blk-write ( -- )    blk-fn fopen-w ?dup if0 ." -err-" drop exit then t1 ;
+: t2        ( -- )    0 blk-addr blk-sz + 1- c! ;
+: load      ( n-- )   blk! blk-read t2 blk-addr outer ;
+: load-next ( n-- )   blk! blk-read t2 blk-addr >in ! ;
 
 : fn-blk ( n--a ) blk@ >r blk! blk-fn r> blk! ;
 : ed     ( n-- )  pad z" vi " s-cpy swap fn-blk s-cat system ;
-( *** App code - starts in block-001 *** )
+( *** App code - starts in block-01 *** )
 1 load

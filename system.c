@@ -61,7 +61,7 @@
 
 char fn[32];
 void emit(const char ch) { fputc(ch, outputFp ? (FILE*)outputFp : stdout); }
-void zType(const char *str) { while (*str) { emit(*str++); } }
+void zType(const char *str) { while (*str) { emit(*(str++)); } }
 
 cell fOpen(cell name, cell mode) { return (cell)fopen((char*)name, (char*)mode); }
 void fClose(cell fh) { fclose((FILE*)fh); }
