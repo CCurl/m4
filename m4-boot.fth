@@ -225,7 +225,7 @@ val blk@   (val) (blk)
 : load      ( n-- )   blk! blk-read t2 blk-addr outer ;
 : load-next ( n-- )   blk! blk-read t2 blk-addr >in ! ;
 
-: fn-blk ( n--a ) blk@ >r blk! blk-fn r> blk! ;
-: ed     ( n-- )  pad z" vi " s-cpy swap fn-blk s-cat system ;
+: edit   ( n-- )  blk! pad z" vi " s-cpy blk-fn s-cat system ;
+: ed     ( -- )   blk@ edit ;
 ( *** App code - starts in block-01 *** )
 1 load

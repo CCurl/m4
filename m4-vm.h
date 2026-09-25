@@ -2,7 +2,7 @@
 
 #ifndef __M4_H__
 
-#define VERSION         20260915
+#define VERSION         20261001
 
 #ifdef _MSC_VER
     #define _CRT_SECURE_NO_WARNINGS
