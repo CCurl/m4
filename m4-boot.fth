@@ -7,19 +7,20 @@
 : cells  ( n--n' ) cell * ;
 : cell+  ( n--n' ) cell + ;
 : immediate ( -- ) $80 last cell+ 1 + c! ;
+: inline    ( -- ) $40 last cell+ 1 + c! ;
 : ->code ( off--addr ) cells mem + ;
 : code@  ( off--dw )  ->code @ ;
 : code!  ( dw off-- ) ->code ! ;
 : , ( dw-- ) here dup 1 + (h) ! code! ;
 
 : bye      ( -- ) 999 state ! ;
-: (exit)   ( --n )  0 ;
-: (lit)    ( --n )  1 ;
-: (jmp)    ( --n )  2 ;
-: (jmpz)   ( --n )  3 ;
-: (jmpnz)  ( --n )  4 ;
-: (njmpz)  ( --n )  5 ;
-: (njmpnz) ( --n )  6 ;
+: (exit)   ( --n )  0 ; inline
+: (lit)    ( --n )  1 ; inline
+: (jmp)    ( --n )  2 ; inline
+: (jmpz)   ( --n )  3 ; inline
+: (jmpnz)  ( --n )  4 ; inline
+: (njmpz)  ( --n )  5 ; inline
+: (njmpnz) ( --n )  6 ; inline
 
 : if   (jmpz)   , here 0 , ; immediate
 : -if  (njmpz)  , here 0 , ; immediate
@@ -116,18 +117,18 @@ find ztype @ const (ztype)
 : vi z" vi m4-boot.fth" system ;
 
 ( More core words )
-: 1+ ( n--n' ) 1 + ;
-: 1- ( n--n' ) 1 - ;
+: 1+ ( n--n' ) 1 + ;  inline
+: 1- ( n--n' ) 1 - ;  inline
 : [ ( -- ) 0 state ! ; immediate  ( 0 = INTERPRET )
 : ] ( -- ) 1 state ! ;            ( 1 = COMPILE )
-: rdrop ( -- ) r> drop ;
-: tuck  ( a b--b a b )   swap over ;
-: nip   ( a b--b )       swap drop ;
-: ?dup ( n--n n|0 )  -if dup then ;
-: 2dup  ( a b--a b a b ) over over ;
-: 2drop ( a b-- )        drop drop ;
+: tuck  ( a b--b a b )   swap over ;  inline
+: nip   ( a b--b )       swap drop ;  inline
+: 2dup  ( a b--a b a b ) over over ;  inline
+: 2drop ( a b-- )        drop drop ;  inline
+: ?dup ( n--n n|0 )      -if dup then ;
 : -rot ( a b c--c a b )  swap >r swap r> ;
-: 0= ( n--f ) 0 =    ;
+: rdrop ( -- ) r> drop ;  inline
+: 0= ( n--f ) 0 =    ;    inline
 : 0< ( n--f ) 0 <    ;
 : <= ( a b--f ) > 0= ;
 : >= ( a b--f ) < 0= ;
