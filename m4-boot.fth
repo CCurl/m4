@@ -1,26 +1,25 @@
 ( these are created later as -last- and -here- )
 ( they are used later for rebooting )
-(h) @   (l) @ 
+(h) @   (l) @
 
 : last (l) @ ;
 : here (h) @ ;
-: inline    ( -- ) $40 last cell + 1 + c! ;
-: immediate ( -- ) $80 last cell + 1 + c! ;
-: cells  ( n--n' ) cell * ; inline
+: cells  ( n--n' ) cell * ;
+: cell+  ( n--n' ) cell + ;
+: immediate ( -- ) $80 last cell+ 1 + c! ;
 : ->code ( off--addr ) cells mem + ;
 : code@  ( off--dw )  ->code @ ;
 : code!  ( dw off-- ) ->code ! ;
 : , ( dw-- ) here dup 1 + (h) ! code! ;
 
 : bye      ( -- ) 999 state ! ;
-: (exit)   ( --n )  0 ; inline
-: (lit)    ( --n )  1 ; inline
-: (jmp)    ( --n )  2 ; inline
-: (jmpz)   ( --n )  3 ; inline
-: (jmpnz)  ( --n )  4 ; inline
-: (njmpz)  ( --n )  5 ; inline
-: (njmpnz) ( --n )  6 ; inline
-: (ztype)  ( --n ) 32 ; inline
+: (exit)   ( --n )  0 ;
+: (lit)    ( --n )  1 ;
+: (jmp)    ( --n )  2 ;
+: (jmpz)   ( --n )  3 ;
+: (jmpnz)  ( --n )  4 ;
+: (njmpz)  ( --n )  5 ;
+: (njmpnz) ( --n )  6 ;
 
 : if   (jmpz)   , here 0 , ; immediate
 : -if  (njmpz)  , here 0 , ; immediate
@@ -35,7 +34,7 @@
 : until (jmpz)    , , ; immediate
 
 ( val and (val) define a very efficient variable mechanism )
-( Usage:  val a@   (val) (a)   : a! (xx) ! ; )
+( Usage:  val a@   (val) @@a   : a! @@a ! ; )
 : const ( n-- ) add-word (lit) , , (exit) , ;
 :  val  ( -- ) 0 const ;
 : (val) ( -- ) here 2 - ->code const ;
@@ -57,7 +56,7 @@ vhere 3 cells - const lse  ( lse: the locals stack end )
 val x0     (val) @@x       ( x0: address of x, @@x: address of x0 )
 val y0     (val) @@y       ( y0: address of y, @@y: address of y0 )
 val z0     (val) @@z       ( z0: address of z, @@z: address of z0 )
-: xyz! ( a-- ) dup @@x ! cell + dup @@y ! cell + @@z ! ;
+: xyz! ( a-- ) dup @@x ! cell+ dup @@y ! cell+ @@z ! ;
 loc-stk xyz!               ( Initialize )
 
 : x@ ( --n ) x0 @ ;      : x! ( n-- ) x0 ! ;
@@ -95,6 +94,7 @@ loc-stk xyz!               ( Initialize )
         y@ c!x+
     again ;
 
+find ztype @ const (ztype)
 : z" ( "string"--addr ) (") ; immediate
 : ." ( "string"-- ) (") compiling? if (ztype) , exit then ztype ; immediate
 
@@ -111,24 +111,24 @@ loc-stk xyz!               ( Initialize )
     z" m4-boot.fth" fopen-r -if0 drop ." m4-boot.fth not found" exit then
     z!  50000 y!  rbb x!  y@ for 0 c!x+ next
     rbb y@ z@ fread drop z@ fclose
-    -here- (h) !  -last- (l) ! 
+    -here- (h) !  -last- (l) !
     rbb >in ! ;
 : vi z" vi m4-boot.fth" system ;
 
 ( More core words )
-: 1+ ( n--n' ) 1 + ; inline
-: 1- ( n--n' ) 1 - ; inline
+: 1+ ( n--n' ) 1 + ;
+: 1- ( n--n' ) 1 - ;
 : [ ( -- ) 0 state ! ; immediate  ( 0 = INTERPRET )
 : ] ( -- ) 1 state ! ;            ( 1 = COMPILE )
-: rdrop ( -- ) r> drop ; inline
-: tuck  ( a b--b a b )   swap over ; inline
-: nip   ( a b--b )       swap drop ; inline
+: rdrop ( -- ) r> drop ;
+: tuck  ( a b--b a b )   swap over ;
+: nip   ( a b--b )       swap drop ;
 : ?dup ( n--n n|0 )  -if dup then ;
-: 2dup  ( a b--a b a b ) over over ; inline
-: 2drop ( a b-- )        drop drop ; inline
+: 2dup  ( a b--a b a b ) over over ;
+: 2drop ( a b-- )        drop drop ;
 : -rot ( a b c--c a b )  swap >r swap r> ;
-: 0= ( n--f ) 0 =    ; inline
-: 0< ( n--f ) 0 <    ; inline
+: 0= ( n--f ) 0 =    ;
+: 0< ( n--f ) 0 <    ;
 : <= ( a b--f ) > 0= ;
 : >= ( a b--f ) < 0= ;
 : type ( a n-- ) for dup c@ emit 1+ next drop ;
@@ -139,8 +139,8 @@ loc-stk xyz!               ( Initialize )
 : tab ( -- )      9 emit ;
 : space  ( -- )  32 emit ;
 : spaces ( n-- ) for space next ;
-: /   ( a b--q ) /mod nip  ; inline
-: mod ( a b--r ) /mod drop ; inline
+: /   ( a b--q ) /mod nip  ;
+: mod ( a b--r ) /mod drop ;
 : */  ( n m q--n' ) >r * r> / ;
 : min ( a b-a|b ) over over > if swap then drop ;
 : max ( a b-a|b ) over over < if swap then drop ;
@@ -167,22 +167,22 @@ cell var (buf)
 : 0sp 0 (sp) ! ;
 : depth ( --n ) (sp) @ 1- ;
 : .s '(' emit space depth ?dup if
-        stk swap for cell + dup @ . next drop
+        stk swap for cell+ dup @ . next drop
     then ')' emit ;
 
-: .word ( de-- ) cell + 3 + ztype ;
+: .word ( de-- ) cell+ 3 + ztype ;
 : words ( -- ) +L last x! 0 y! 1 z! begin
         x@ dict-end < if0 '(' emit z@ . ." words)" -L exit then
         x@ .word tab z++
-        x@ cell + 2 + c@ 7 > if y++ then 
+        x@ cell+ 2 + c@ 7 > if y++ then
         y@+ 12 > if cr 0 y! then
-        x@ dup cell + c@ + x!
+        x@ dup cell+ c@ + x!
     again ;
 
 : words-n ( n-- ) +L last x! 0 y! for
         x@ .word tab
         y@+ 12 > if cr 0 y! then
-		x@ dup cell + c@ + x!
+		x@ dup cell+ c@ + x!
     next -L ;
 
 cell var t4   cell var t5
@@ -204,28 +204,28 @@ cell var t4   cell var t5
 : s-catn ( dst num--dst ) <# #s #> s-cat ;
 : s-eqn  ( s1 s2 n--f ) +L3 z@ for c@x+ c@y+ = if0 -L 0 unloop exit then next -L 1 ;
 : s-eq   ( s1 s2--f ) dup s-len 1+ s-eqn ;
-  
+
 ( Disk: 64 blocks, 16K bytes each )
 : kb ( n--m ) 1024 * ;
 : mb ( n--m ) kb kb ;
 mem mem-sz 2 mb - + const disk
 32 var fn
 val blk@   (val) (blk)
-: #blks     ( --n )   64 ;
-: blk-sz    ( --n )   16 kb ;
+: #blks     ( --n )   100 ; ( 0 -> 99 )
+: blk-sz    ( --n )   10 kb ;
 : blk!      ( n-- )   0 max #blks 1- min (blk) ! ;
 : blk-fn    ( --a )   fn z" block-" s-cpy blk@ <# # #s #> s-cat z" .fth" s-cat ;
 : blk-addr  ( --a )   blk@ blk-sz * disk + ;
 : blk-clr   ( -- )    blk-addr blk-sz 0 fill ;
-: brd       ( fh-- )  >r  blk-clr  blk-addr blk-sz r@ fread drop  r> fclose ;
-: blk-read  ( -- )    blk-fn fopen-r ?dup if0 ." file " blk-fn ztype ."  not found." drop exit then brd ;
-: bwt       ( fh-- )  >r  blk-addr blk-sz r@ fwrite drop  r> fclose ;
-: blk-write ( -- )    blk-fn fopen-w ?dup if0 ." -err-" drop exit then bwt ;
-: blk-nullt ( -- )    0 blk-addr blk-sz + 1- c! ;
-: load      ( n-- )   blk! blk-read blk-nullt blk-addr outer ;
-: load-next ( n-- )   blk! blk-read blk-nullt blk-addr >in ! ;
+: t0        ( fh-- )  >r  blk-clr  blk-addr blk-sz r@ fread drop  r> fclose ;
+: blk-read  ( -- )    blk-fn fopen-r ?dup if0 blk-fn ztype ."  not found." drop exit then t0 ;
+: t1        ( fh-- )  >r  blk-addr blk-sz r@ fwrite drop  r> fclose ;
+: blk-write ( -- )    blk-fn fopen-w ?dup if0 ." -err-" drop exit then t1 ;
+: t2        ( -- )    0 blk-addr blk-sz + 1- c! ;
+: load      ( n-- )   blk! blk-read t2 blk-addr outer ;
+: load-next ( n-- )   blk! blk-read t2 blk-addr >in ! ;
 
-: fn-blk ( n--a ) blk@ >r blk! blk-fn r> blk! ;
-: ed     ( n-- )  pad z" vi " s-cpy swap fn-blk s-cat system ;
-( *** App code - starts in block-001 *** )
+: edit   ( n-- )  blk! pad z" vi " s-cpy blk-fn s-cat system ;
+: ed     ( -- )   blk@ edit ;
+( *** App code - starts in block-01 *** )
 1 load

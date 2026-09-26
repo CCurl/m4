@@ -15,7 +15,7 @@
    next -L ;
 
 ( some benchmarks )
-: lap ( --n ) timer ; inline
+: lap ( --n ) timer ;
 : .lap ( n-- ) lap swap - space . ." ticks" cr ;
 
 : mil 1000 dup * * ;
@@ -32,8 +32,8 @@
 : f. ( n-- )    100 /mod (.) '.' emit abs 2 10 .nwb ;
 : f* ( a b--c ) * 100 / ;
 : f/ ( a b--c ) swap 100 * swap / ;
-: f+ ( a b--c ) + ; inline
-: f- ( a b--c ) - ; inline
+: f+ ( a b--c ) + ;
+: f- ( a b--c ) - ;
 
 ( Random numbers )
 val seed@   (val) t2
@@ -86,6 +86,6 @@ tstk tsp!              ( Initialize )
     yellow ."   Memory: " white mem-sz . ." bytes." cr
     yellow ."     Code: " white vars mem - cell / . ." cells, used: " here . cr
     yellow ."     Vars: " white last vars - . ." bytes, used: " vhere vars - . cr
-    yellow ."     Dict: " white dict-end last - .  ." bytes used" cr 
+    yellow ."     Dict: " white dict-end last - .  ." bytes used" cr
     ." hello." cr ;
 .banner

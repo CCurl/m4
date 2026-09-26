@@ -47,7 +47,7 @@
 	X(TIMER,  "timer",    push(timer()); ) \
 	X(ADDW,   "add-word", addToDict((char *)0); ) \
 	X(OUTER,  "outer",    outer((char*)pop()); ) \
-	X(SYS,    "system",   system((char*)pop()); )
+	X(SYS,    "system",   ttyMode(0); system((char*)pop()); )
 
 #define X1(op, name, theCode) op,
 #define X2(op, name, theCode) case op: theCode goto next;
@@ -59,6 +59,7 @@ char mem[MEM_SZ], *toIn, wd[32];
 ucell *code=(ucell*)&mem[0], dsp, rsp, lsp;
 cell dstk[STK_SZ+1], rstk[STK_SZ+1], lstk[STK_SZ+1], outputFp=0;
 cell here=HERE_START, last=(cell)&mem[MEM_SZ], base=10, state=INTERPRET;
+DE_T tmpWords[10];
 
 void push(cell v) { if (dsp < STK_SZ) { dstk[++dsp] = v; } }
 cell pop() { return (0 < dsp) ? dstk[dsp--] : 0; }
@@ -69,8 +70,9 @@ void addPrim(const char *nm, ucell op) { DE_T *dp = addToDict(nm); if (dp) { dp-
 void doInterp(ucell xt) { code[10]=xt; code[11]=EXIT; inner(10); }
 char *checkWord(char *w) { return w ? w : (nextWord() ? &wd[0] : NULL); }
 void compileNum(cell n) { comma(LIT); comma(n); }
-void compileErr(char *w) { zType("\n-word:["); zType(w); zType("]?-\n"); }
+void compileErr(char *w) { zType("\r\n-word:["); zType(w); zType("]?\r\n"); }
 void addLit(const char *name, cell val) { addToDict(name); compileNum(val); comma(EXIT); }
+int  isTempWord(const char *w) { return ((w[0]=='t') && btwi(w[1],'0','9') && (w[2]==0)); }
 
 int nextWord() {
 	int ln = 0;
@@ -99,6 +101,7 @@ int isNum(const char *w, cell b) {
 
 DE_T *addToDict(const char *w) {
 	w = checkWord((char*)w);
+	if (isTempWord(w)) { DE_T *dp=&tmpWords[w[1]-'0']; dp->xt=here; return dp; }
 	int ln = strlen(w);
 	if (ln == 0) { return (DE_T*)0; }
 	byte sz = CELL_SZ + 4 + ln; // xt, sz, fl, ln, name[], null
@@ -112,6 +115,7 @@ DE_T *addToDict(const char *w) {
 
 DE_T *findInDict(char *w) {
 	w = checkWord((char*)w);
+	if (isTempWord(w)) { return &tmpWords[w[1]-'0']; }
 	int ln = strlen(w);
 	for (DE_T *dp=(DE_T*)last; dp<(DE_T*)&mem[MEM_SZ]; dp=(DE_T*)((cell)dp+dp->sz)) {
 		if ((dp->ln == ln) && (strEqI(dp->nm, w))) { return dp; }

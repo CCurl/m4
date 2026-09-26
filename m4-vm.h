@@ -2,7 +2,7 @@
 
 #ifndef __M4_H__
 
-#define VERSION         20260915
+#define VERSION         20261001
 
 #ifdef _MSC_VER
     #define _CRT_SECURE_NO_WARNINGS
@@ -23,7 +23,6 @@
 #define MEM_SZ         0x1000000 // 16MB
 #define STK_SZ                63
 #define IMMED               0x80
-#define INLINE              0x40
 #define CELL_SZ                4
 #define byte             uint8_t
 #define cell             int32_t
@@ -53,6 +52,7 @@ extern char mem[];
 // m4-vm.c needs these to be defined
 extern void zType(const char *str);
 extern void emit(const char ch);
+extern void ttyMode(int isRaw);
 extern int  key();
 extern int  qKey();
 extern cell timer();
