@@ -4,14 +4,15 @@ m4 is an extremely minimal Forth system that can run stand-alone or be embedded 
 
 m4 has 45 primitives: 32 core (#0-31) and 13 system (#32-44).<br/>
 m4 is implemented in 3 files: (m4-vm.c, m4-vm.h, system.c). <br/>
-The VM itself is 167 lines of code.
+The VM itself is 171 lines of code.
 
 On Windows, a Release build compiles to a 17k executable. <br/>
-On a Linux box, it is about 20k.
+On a Linux box, it is about 21k.
 
 **m4** is a DWord-Code system, inspired by Tachyon. <br/>
 In a m4 program, each instruction is a DWORD (32-bits). <br/>
 - If <= the last primitive (44), then it is a primitive.
+- Else, if bit 30 is on ($40000000), it is a number masked with ($3FFFFFFF),
 - Else, it is the XT (code address) of a word in the dictionary.
 
 ## m4 hard-codes the following IMMEDIATE state-change words:
@@ -24,15 +25,19 @@ In a m4 program, each instruction is a DWORD (32-bits). <br/>
 **NOTE**: '(' skip words until the next ')' word.<br/>
 **NOTE**: State '999' signals m4 to exit. `: bye 999 state ! ;`<br/>
 
+## INLINE words
+
+An INLINE word is somewhat similar to a macro in other languages.<br/>
+When a word is INLINE, its definition is copied to the target, up to the first `EXIT`.<br/>
+When not INLINE, a call is made to the word instead.<br/>
+**NOTE**: if the next instruction is `EXIT`, it becomes a `JUMP` instead (the tail-call optimization).<br/>
+
 ## Transient words
 
 Words 't0' through 't9' are transient and are not added to the dictionary.<br/>
 They are **case sensitive** - 't0' is a transient word, 'T0' is not.<br/>
 They help with factoring code and keep the dictionary uncluttered.<br/>
 They can be reused as many times as desired.<br/>
-**NOTE**: The most minimal implementation would not include these.<br/>
-**NOTE**: But they are very useful and added only 4 lines to the VM.<br/>
-**NOTE**: Including them added 52 bytes to the exeutable.
 
 ## m4 Startup Behavior
 

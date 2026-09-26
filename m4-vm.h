@@ -34,7 +34,7 @@
 #define L2            lstk[lsp-2]
 
 enum { INTERPRET=0, COMPILE=1, BYE=999, INLINE=0x40, IMMED=0x80 };
-enum { LIT_MASK=0x04000000, LIT_BITS=0x03FFFFFF };
+enum { LIT_MASK=0x40000000, LIT_BITS=0x3FFFFFFF };
 typedef struct { ucell xt; byte sz; byte fl; byte ln; char nm[1]; } DE_T;
 typedef struct { char *name; ucell value; } NVP_T;
 

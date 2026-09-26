@@ -66,14 +66,14 @@ cell pop() { return (0 < dsp) ? dstk[dsp--] : 0; }
 void rpush(cell v) { if (rsp < STK_SZ) { rstk[++rsp] = v; } }
 cell rpop() { return (0 < rsp) ? rstk[rsp--] : 0; }
 void comma(ucell val) { code[here++] = val; }
-void addPrim(const char *nm, ucell op) { DE_T *dp = addToDict(nm); if (dp) { dp->xt = op; } }
 void doInterp(ucell xt) { code[10]=xt; code[11]=EXIT; inner(10); }
-char *checkWord(char *w) { return w ? w : (nextWord() ? &wd[0] : NULL); }
 void doInline(ucell xt) { while (code[xt] != EXIT) { comma(code[xt++]); } }
+char *checkWord(char *w) { return w ? w : (nextWord() ? &wd[0] : NULL); }
 void lit1(cell n) { comma(n | LIT_MASK); }
 void lit2(cell n) { comma(LIT); comma(n); }
 void compileNum(cell n) { btwi(n,0,LIT_BITS) ? lit1(n) : lit2(n); }
 void compileErr(char *w) { zType("\r\n-word:["); zType(w); zType("]?\r\n"); }
+void addPrim(const char *nm, ucell op) { DE_T *dp = addToDict(nm); if (dp) { dp->xt = op; } }
 void addLit(const char *name, cell val) { addToDict(name); compileNum(val); comma(EXIT); }
 int  isTempWord(const char *w) { return ((w[0]=='t') && btwi(w[1],'0','9') && (w[2]==0)); }
 
@@ -150,7 +150,6 @@ void outer(const char *src) {
 		if (!dp) { compileErr(wd); state=INTERPRET; break; }
 		if ((state == INTERPRET) || (dp->fl & IMMED)) { doInterp(dp->xt); }
 		else { (dp->fl & INLINE) ? doInline(dp->xt) : comma(dp->xt); } 
-		// else { comma(dp->xt); } 
 	}
 	toIn = svIn;
 }
