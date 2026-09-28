@@ -4,10 +4,10 @@
 
 : last (l) @ ;
 : here (h) @ ;
-: cells  ( n--n' ) cell * ;
-: cell+  ( n--n' ) cell + ;
-: immediate ( -- ) $80 last cell+ 1 + c! ;
-: inline    ( -- ) $40 last cell+ 1 + c! ;
+: immediate ( -- ) $80 last cell + 1 + c! ;
+: inline    ( -- ) $40 last cell + 1 + c! ;
+: cells  ( n--n' ) cell * ; inline
+: cell+  ( n--n' ) cell + ; inline
 : ->code ( off--addr ) cells mem + ;
 : code@  ( off--dw )  ->code @ ;
 : code!  ( dw off-- ) ->code ! ;
@@ -35,7 +35,7 @@
 : until (jmpz)    , , ; immediate
 
 ( val and (val) define a very efficient variable mechanism )
-( Usage:  val a@   (val) @@a   : a! @@a ! ; )
+( Usage:  val a@   (val) (a)   : a! (a) ! ; )
 : const ( n-- ) add-word (lit) , , (exit) , ;
 :  val  ( -- ) 0 const ;
 : (val) ( -- ) here 2 - ->code const ;
@@ -51,48 +51,51 @@ vars (vh) !
 : allot ( n-- ) (vh) +! ;
 : var   ( n-- ) vhere const allot ;
 
-( A stack for 3 locals - x,y,z )
-30 cells var loc-stk       ( loc-stk: the locals stack start )
-vhere 3 cells - const lse  ( lse: the locals stack end )
-val x0     (val) @@x       ( x0: address of x, @@x: address of x0 )
-val y0     (val) @@y       ( y0: address of y, @@y: address of y0 )
-val z0     (val) @@z       ( z0: address of z, @@z: address of z0 )
-: xyz! ( a-- ) dup @@x ! cell+ dup @@y ! cell+ @@z ! ;
-loc-stk xyz!               ( Initialize )
+( variables: x, y, z )
+val x@   (val) t0   : x! ( n-- ) t0 ! ;
+val y@   (val) t0   : y! ( n-- ) t0 ! ;
+val z@   (val) t0   : z! ( n-- ) t0 ! ;
 
-: x@ ( --n ) x0 @ ;      : x! ( n-- ) x0 ! ;
-: y@ ( --n ) y0 @ ;      : y! ( n-- ) y0 ! ;
-: z@ ( --n ) z0 @ ;      : z! ( n-- ) z0 ! ;
-
-: +L  ( -- )  z0 lse < if x0 3 cells + xyz! then ;
-: -L  ( -- )  x0 loc-stk > if x0 3 cells - xyz! then ;
-: +L1 ( x -- )    +L x! ;
-: +L2 ( x y-- )   +L y! x! ;
-: +L3 ( x y z-- ) +L z! y! x! ;
-
-: x++ ( -- )  1 x0 +! ;    : x@+  ( --n ) x@ x++ ;
-: x-- ( -- ) -1 x0 +! ;    : x@-  ( --n ) x@ x-- ;
+: x++ ( -- )  x@ 1 + x! ;  : x@+  ( --n ) x@ dup 1 + x! ;
+: x-- ( -- )  x@ 1 - x! ;  : x@-  ( --n ) x@ dup 1 - x! ;
 : c@x ( --b ) x@ c@ ;      : c@x+ ( --b ) x@+ c@ ;  : c@x- ( --b ) x@- c@ ;
 : c!x ( b-- ) x@ c! ;      : c!x+ ( b-- ) x@+ c! ;  : c!x- ( b-- ) x@- c! ;
 
-: y++ ( -- )  1 y0 +! ;    : y@+  ( --n ) y@ y++ ;
-: y-- ( -- ) -1 y0 +! ;    : y@-  ( --n ) y@ y-- ;
+: y++ ( -- )  y@ 1 + y! ;  : y@+  ( --n ) y@ dup 1 + y! ;
+: y-- ( -- )  y@ 1 - y! ;  : y@-  ( --n ) y@ dup 1 - y! ;
 : c@y ( --b ) y@ c@ ;      : c@y+ ( --b ) y@+ c@ ;  : c@y- ( --b ) y@- c@ ;
 : c!y ( b-- ) y@ c! ;      : c!y+ ( b-- ) y@+ c! ;  : c!y- ( b-- ) y@- c! ;
 
-: z++ ( -- )  1 z0 +! ;    : z@+  ( --n ) z@ z++ ;
+: z++ ( -- )  z@ 1 + z! ;  : z@+  ( --n ) z@ dup 1 + z! ;
+
+( a circular stack )
+32 cells var stk
+val sp@   (val) t0
+: sp! ( n-- ) 127 and t0 ! ;
+: s@  ( --n ) stk sp@ + @ ;
+: s!  ( n-- ) stk sp@ + ! ;
+: >s  ( n-- ) sp@ cell + sp! s! ;
+: s>  ( --n ) s@ sp@ cell - sp! ;
+
+( x, y and z as local variables )
+: >x  ( x-- ) x@ >s x! ;  : <x  ( -- )  s> x! ;
+: >y  ( y-- ) y@ >s y! ;  : <y  ( -- )  s> y! ;
+: >z  ( z-- ) z@ >s z! ;  : <z  ( -- )  s> z! ;
+
+: >xy  ( x y-- )   >y >x ;     : <xy  ( -- ) <x <y ;
+: >xyz ( x y z-- ) >z >y >x ;  : <xyz ( -- ) <x <y <z ;
 
 ( Strings )
 : compiling? ( --n ) state @ 1 = ;
-: (") ( --a ) +L vhere dup z! x! 1 >in +!
+: (") ( --a ) vhere 0 vhere >xyz 1 >in +!
     begin
-        >in @ c@ y! 1 >in +!
-        y@ 0 = y@ '"' = or
-        if  0 c!x+  z@
-            compiling? if (lit) , , x@ (vh) ! then
-            -L exit
-        then
-        y@ c!x+
+      >in @ c@ y! 1 >in +!
+      y@ 0 = y@ '"' = or
+      if  0 c!x+  z@
+        compiling? if (lit) , , x@ (vh) ! then
+        <xyz exit
+      then
+      y@ c!x+
     again ;
 
 find ztype @ const (ztype)
@@ -165,26 +168,29 @@ cell var (buf)
 : (.)  ( n-- )   <# #s #> ztype ;
 : .    ( n-- )   (.) space ;
 
-: 0sp 0 (sp) ! ;
-: depth ( --n ) (sp) @ 1- ;
+: 0sp 0 (dsp) ! ;
+: depth ( --n ) (dsp) @ 1- ;
 : .s '(' emit space depth ?dup if
-        stk swap for cell+ dup @ . next drop
+      dstk swap for cell+ dup @ . next drop
     then ')' emit ;
 
+: t6   ( n-- )  dup sp@ = if ." sp:" then dup stk + @ . cell + ;
+: .stk ( -- )  '(' emit space 0 32 for t6 next drop ')' emit ;
+
 : .word ( de-- ) cell+ 3 + ztype ;
-: words ( -- ) +L last x! 0 y! 1 z! begin
-        x@ dict-end < if0 '(' emit z@ . ." words)" -L exit then
-        x@ .word tab z++
-        x@ cell+ 2 + c@ 7 > if y++ then
-        y@+ 12 > if cr 0 y! then
-        x@ dup cell+ c@ + x!
+: words ( -- ) last 0 1 >xyz begin
+      x@ dict-end < if0 '(' emit z@ . ." words)" <xyz exit then
+      x@ .word tab z++
+      x@ cell+ 2 + c@ 7 > if y++ then
+      y@+ 12 > if cr 0 y! then
+      x@ dup cell+ c@ + x!
     again ;
 
-: words-n ( n-- ) +L last x! 0 y! for
-        x@ .word tab
-        y@+ 12 > if cr 0 y! then
-		x@ dup cell+ c@ + x!
-    next -L ;
+: words-n ( n-- ) last 0 >xy for
+      x@ .word tab
+      y@+ 12 > if cr 0 y! then
+      x@ dup cell+ c@ + x!
+    next <xy ;
 
 cell var t4   cell var t5
 : [[ here t4 !  vhere t5 !  1 state ! ;
@@ -194,16 +200,16 @@ cell var t4   cell var t5
 ( Strings / Memory )
 : pad    ( --a ) vhere $100 + ;
 : fill   ( a num ch-- ) -rot for 2dup c! 1+ next 2drop ;
-: cmove  ( f t n-- )  +L3  z@ if  z@ for c@x+ c!y+ next then -L ;
-: cmove> ( f t n-- )  +L3  y@ z@ + 1- y!  x@ z@ + 1- x!  z@ for c@x- c!y- next -L ;
-: s-len  ( str--len ) +L1 0 begin c@x+ if0 -L exit then 1+ again ;
+: cmove  ( f t n-- )  >xyz  z@ if  z@ for c@x+ c!y+ next then <xyz ;
+: cmove> ( f t n-- )  >xyz  y@ z@ + 1- y!  x@ z@ + 1- x!  z@ for c@x- c!y- next <xyz ;
+: s-len  ( str--len ) >x 0 begin c@x+ if0 <x exit then 1+ again ;
 : s-end  ( str--end ) dup s-len + ;   ( end: address of the null )
 : s-cpy  ( dst src--dst ) 2dup s-len 1+ cmove ;
 : s-cat  ( dst src--dst ) over s-end  over s-len 1+  cmove ;
 : s-scat ( src dst--dst ) swap s-cat ;
-: s-catc ( dst ch--dst )  over s-end  +L1  c!x+  0 c!x+  -L ;
+: s-catc ( dst ch--dst )  over s-end  >x  c!x+  0 c!x+  <x ;
 : s-catn ( dst num--dst ) <# #s #> s-cat ;
-: s-eqn  ( s1 s2 n--f ) +L3 z@ for c@x+ c@y+ = if0 -L 0 unloop exit then next -L 1 ;
+: s-eqn  ( s1 s2 n--f ) >xyz z@ for c@x+ c@y+ = if0 <xyz 0 unloop exit then next <xyz -1 ;
 : s-eq   ( s1 s2--f ) dup s-len 1+ s-eqn ;
 
 ( Disk: 64 blocks, 16K bytes each )

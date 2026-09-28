@@ -1,24 +1,21 @@
 ( some examples )
 
 ( a circular stack )
-128 var astk
-val asp@   (val) t0
-: asp! ( n-- ) 127 and t0 ! ;
-: asp++ ( -- ) asp@ 4 + asp! ;
-: asp-- ( -- ) asp@ 4 - asp! ;
-: astk@ ( --n ) astk asp@ + @ ;
-: astk! ( n-- ) astk asp@ + ! ;
-: >astk ( n-- ) asp++ astk! ;
-: astk> ( --n ) astk@ asp-- ;
+32 cells var stk
+val sp@   (val) t0
+: sp! ( n-- ) 127 and t0 ! ;
+: s@  ( --n ) stk sp@ + @ ;
+: s!  ( n-- ) stk sp@ + ! ;
+: >s  ( n-- ) sp@ cell + sp! s! ;
+: s>  ( --n ) s@ sp@ cell - sp! ;
 
-( a & b variables similar to ColorForth )
-val a@   (val) t0   : a! ( n-- ) t0 ! ;
-val b@   (val) t0   : b! ( n-- ) t0 ! ;
+val x@   (val) t0   : x! ( n-- ) t0 ! ;
+val y@   (val) t0   : y! ( n-- ) t0 ! ;
+val z@   (val) t0   : z! ( n-- ) t0 ! ;
 
-: <a ( -- )  astk> a! ;      : <b ( -- )  astk> b! ;
-: a> ( --n ) a@ <a ;         : b> ( --n ) b@ <b ;
-: >a ( n-- ) a@ >astk a! ;   : >b ( n-- ) b@ >astk b! ;
+: >x ( n-- ) x@ >s x! ;  : >y ( n-- ) y@ >s y! ;  : >z ( n-- ) z@ >s z! ;
+: <x ( -- )  s> x! ;     : <y ( -- )  s> y! ;     : <z ( -- )  s> z! ;
+: x> ( --n ) x@ <x ;     : y> ( --n ) y@ <y ;     : z> ( --n ) z@ <z ;
 
-: >ab ( a b-- ) >b >a ;
-: +ab ( -- ) 0 dup >ab ;
-: -ab ( -- ) <a <b ;
+: >xy ( x y-- ) >y >x ;  : >xyz ( x y z-- ) >z >y >x ;
+: <xy ( -- )    <x <y ;  : <xyz ( -- )      <x <y <z ;

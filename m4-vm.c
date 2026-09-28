@@ -161,7 +161,7 @@ void m4Init() {
 		{ "(h)",     (cell)&here },    { "(l)",       (cell)&last },
 		{ "(lsp)",   (cell)&lsp },     { "lstk",      (cell)&lstk[0] },
 		{ "(rsp)",   (cell)&rsp },     { "rstk",      (cell)&rstk[0] },
-		{ "(sp)",    (cell)&dsp },     { "stk",       (cell)&dstk[0] },
+		{ "(dsp)",   (cell)&dsp },     { "dstk",      (cell)&dstk[0] },
 		{ "mem",     (cell)&mem[0] },  { "mem-sz",    (cell)MEM_SZ },
 		{ "state",   (cell)&state },   { "base",      (cell)&base },
 		{ ">in",     (cell)&toIn},     { "cell",      (cell)CELL_SZ },  { 0, 0 }

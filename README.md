@@ -115,8 +115,8 @@ On startup, m4 does the following:
 | lstk      | (--a) | Address of the loop stack. |
 | (rsp)     | (--a) | Address of the return stack pointer. |
 | rstk      | (--a) | Address of the return stack. |
-| (sp)      | (--a) | Address of the data stack pointer. |
-| stk       | (--a) | Address of the data stack. |
+| (dsp)     | (--a) | Address of the data stack pointer. |
+| dstk      | (--a) | Address of the data stack. |
 | mem       | (--a) | Address of the beginning of the memory area. |
 | mem-sz    | (--n) | The number of BYTEs in the memory area. |
 | state     | (--a) | Address of STATE. |
