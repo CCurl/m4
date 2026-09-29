@@ -110,13 +110,13 @@ find ztype @ const (ztype)
 : ->stdout! ( -- )     output-fp @ fclose ->stdout ;
 
 ( reboot )
-: rbb vars y@ + ;
+: t0 vars y@ + ;
 : rb ( -- )
     z" m4-boot.fth" fopen-r -if0 drop ." m4-boot.fth not found" exit then
-    z!  50000 y!  rbb x!  y@ for 0 c!x+ next
-    rbb y@ z@ fread drop z@ fclose
+    z!  50000 y!  t0 x!  y@ for 0 c!x+ next
+    t0 y@ z@ fread drop z@ fclose
     -here- (h) !  -last- (l) !
-    rbb >in ! ;
+    t0 >in ! ;
 : vi z" vi m4-boot.fth" system ;
 
 ( More core words )
@@ -154,17 +154,17 @@ find ztype @ const (ztype)
 : hex      ( -- )  $10 base ! ;
 : binary   ( -- )  %10 base ! ;
 
-   1 var (neg)
-  65 var buf
+   1 var #neg
+  65 var #buf
 cell var (buf)
-: ?neg ( n--n' ) dup 0< dup (neg) c! if negate then ;
+: ?neg ( n--n' ) dup 0< dup #neg c! if negate then ;
 : hold ( c-- )   -1 (buf) +! (buf) @ c! ;
 : #.   ( -- )    '.' hold ;
 : #n   ( n-- )   '0' + dup '9' > if 7 + then hold ;
 : #    ( n--m )  base @ /mod swap #n ;
 : #s   ( n--0 )  # -if #s exit then ;
-: <#   ( n--n' ) ?neg buf 65 + (buf) ! 0 hold ;
-: #>   ( n--a )  drop (neg) @ if '-' hold then (buf) @ ;
+: <#   ( n--n' ) ?neg #buf 65 + (buf) ! 0 hold ;
+: #>   ( n--a )  drop #neg @ if '-' hold then (buf) @ ;
 : (.)  ( n-- )   <# #s #> ztype ;
 : .    ( n-- )   (.) space ;
 
