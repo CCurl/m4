@@ -78,13 +78,13 @@ On startup, m4 does the following:
 |  19       | +        | (a b--c)     | TOS = NOS+TOS. Discard NOS. |
 |  20       | -        | (a b--c)     | TOS = NOS-TOS. Discard NOS. |
 |  21       | /mod     | (a b--r q)   | TOS = NOS/TOS. NOS = NOS modulo TOS. |
-|  22       | <        | (a b--f)     | If (NOS<TOS) then TOS = -1 else TOS = 0. Discard NOS. |
-|  23       | =        | (a b--f)     | If (NOS=TOS) then TOS = -1 else TOS = 0. Discard NOS. |
-|  24       | >        | (a b--f)     | If (NOS<TOS) then TOS = -1 else TOS = 0. Discard NOS. |
+|  22       | <        | (a b--f)     | If (NOS < TOS) then TOS = -1 else TOS = 0. Discard NOS. |
+|  23       | =        | (a b--f)     | If (NOS = TOS) then TOS = -1 else TOS = 0. Discard NOS. |
+|  24       | >        | (a b--f)     | If (NOS < TOS) then TOS = -1 else TOS = 0. Discard NOS. |
 |  25       | +!       | (n a--)      | Add NOS to the cell at TOS. Discard TOS and NOS. |
-|  26       | for      | (N--)        | Start a FOR loop starting at 0. Upper limit is N. |
+|  26       | for      | (N--)        | Start a FOR loop starting at 0. Upper limit is (N-1). |
 |  27       | i        | (--I)        | Push current loop index. |
-|  28       | next     | (--)         | Increment I. If I < N then jump to loop start. |
+|  28       | next     | (--)         | Increment I. If (I < N) then jump to loop start. |
 |  29       | and      | (a b--c)     | TOS = NOS and TOS. Discard NOS. |
 |  30       | or       | (a b--c)     | TOS = NOS or  TOS. Discard NOS. |
 |  31       | xor      | (a b--c)     | TOS = NOS xor TOS. Discard NOS. |
