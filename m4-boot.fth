@@ -51,6 +51,20 @@ vars (vh) !
 : allot ( n-- ) (vh) +! ;
 : var   ( n-- ) vhere const allot ;
 
+( formatted number output )
+  36 var #buf
+cell var (buf)
+: ?neg ( n--n' ) dup 0 < dup #buf c! if 0 swap - then ;
+: hold ( c-- )   -1 (buf) +! (buf) @ c! ;
+: #.   ( -- )    '.' hold ;
+: #n   ( n-- )   '0' + dup '9' > if 7 + then hold ;
+: #    ( n--m )  base @ /mod swap #n ;
+: #s   ( n--0 )  # -if #s exit then ;
+: <#   ( n--n' ) ?neg #buf 36 + (buf) ! 0 hold ;
+: #>   ( n--a )  drop #buf c@ if '-' hold then (buf) @ ;
+: (.)  ( n-- )   <# #s #> ztype ;
+: .    ( n-- )   (.) 32 emit ;
+
 ( variables: x, y, z )
 val x@   (val) t0   : x! ( n-- ) t0 ! ;
 val y@   (val) t0   : y! ( n-- ) t0 ! ;
@@ -74,8 +88,10 @@ val sp@   (val) t0
 : sp! ( n-- ) 127 and t0 ! ;
 : s@  ( --n ) stk sp@ + @ ;
 : s!  ( n-- ) stk sp@ + ! ;
-: >s  ( n-- ) sp@ cell + sp! s! ;
+: >s  ( n-- ) sp@ cell+ dup sp! stk + ! ;
 : s>  ( --n ) s@ sp@ cell - sp! ;
+: t6  ( n-- ) dup sp@ = if '-' emit '>' emit then dup stk + @ . cell+ ;
+: .stk ( -- ) '(' emit 32 emit 0 32 for t6 next drop ')' emit ;
 
 ( x, y and z as local variables )
 : >x  ( x-- ) x@ >s x! ;  : <x  ( -- )  s> x! ;
@@ -132,7 +148,7 @@ find ztype @ const (ztype)
 : -rot ( a b c--c a b )  swap >r swap r> ;
 : rdrop ( -- ) r> drop ;  inline
 : 0= ( n--f ) 0 =    ;    inline
-: 0< ( n--f ) 0 <    ;
+: 0< ( n--f ) 0 <    ;    inline
 : <= ( a b--f ) > 0= ;
 : >= ( a b--f ) < 0= ;
 : type ( a n-- ) for dup c@ emit 1+ next drop ;
@@ -154,28 +170,11 @@ find ztype @ const (ztype)
 : hex      ( -- )  $10 base ! ;
 : binary   ( -- )  %10 base ! ;
 
-   1 var #neg
-  65 var #buf
-cell var (buf)
-: ?neg ( n--n' ) dup 0< dup #neg c! if negate then ;
-: hold ( c-- )   -1 (buf) +! (buf) @ c! ;
-: #.   ( -- )    '.' hold ;
-: #n   ( n-- )   '0' + dup '9' > if 7 + then hold ;
-: #    ( n--m )  base @ /mod swap #n ;
-: #s   ( n--0 )  # -if #s exit then ;
-: <#   ( n--n' ) ?neg #buf 65 + (buf) ! 0 hold ;
-: #>   ( n--a )  drop #neg @ if '-' hold then (buf) @ ;
-: (.)  ( n-- )   <# #s #> ztype ;
-: .    ( n-- )   (.) space ;
-
 : 0sp 0 (dsp) ! ;
 : depth ( --n ) (dsp) @ 1- ;
 : .s '(' emit space depth ?dup if
       dstk swap for cell+ dup @ . next drop
     then ')' emit ;
-
-: t6   ( n-- )  dup sp@ = if ." sp:" then dup stk + @ . cell + ;
-: .stk ( -- )  '(' emit space 0 32 for t6 next drop ')' emit ;
 
 : .word ( de-- ) cell+ 3 + ztype ;
 : words ( -- ) last 0 1 >xyz begin
@@ -215,11 +214,11 @@ cell var t4   cell var t5
 ( Disk: 64 blocks, 16K bytes each )
 : kb ( n--m ) 1024 * ;
 : mb ( n--m ) kb kb ;
-mem mem-sz 2 mb - + const disk
+mem mem-sz + 2 mb - const disk
 32 var fn
 val blk@   (val) (blk)
-: #blks     ( --n )   100 ; ( 0 -> 99 )
-: blk-sz    ( --n )   10 kb ;
+: #blks     ( --n )   256 ; ( 0 -> 255 )
+: blk-sz    ( --n )   4 kb ;
 : blk!      ( n-- )   0 max #blks 1- min (blk) ! ;
 : blk-fn    ( --a )   fn z" block-" s-cpy blk@ <# # #s #> s-cat z" .fth" s-cat ;
 : blk-addr  ( --a )   blk@ blk-sz * disk + ;
