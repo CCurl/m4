@@ -8,14 +8,14 @@
 : .hex     ( n-- )  #2 $10 .nwb ;
 
 : aemit ( ch-- )  dup #31 $7F btwi if0 drop '.' then emit ;
-: t0    ( addr-- )  +L1 $10 for c@x+ aemit next -L ;
-: dump  ( addr n-- )  0 +L3 y@ for
+: t0    ( addr-- )  >x $10 for c@x+ aemit next <x ;
+: dump  ( addr n-- )  0 >xyz y@ for
      z@+ if0 x@ cr .hex ." : " then c@x+ .hex space
      z@ $10 = if 0 z! space space x@ $10 - t0 then
-   next -L ;
+   next <xyz ;
 
 ( some benchmarks )
-: lap ( --n ) timer ; inline
+: lap ( --n ) timer ;
 : .lap ( n-- ) lap swap - space . ." ticks" cr ;
 
 : mil 1000 dup * * ;
@@ -24,16 +24,16 @@
 : bm-while ( n-- ) z" while " t0 begin 1- -while drop .lap ;
 : bm-loop  ( n-- ) z" loop "  t0 for next .lap ;
 : bm-fib   ( n-- ) z" fib "   t0 fib space (.) .lap ;
-: bm-fibs  ( n-- ) 1 +L1 for x@+ bm-fib next -L ;
+: bm-fibs  ( n-- ) 1 >x for x@+ bm-fib next <x ;
 : bb ( -- ) 1000 mil bm-loop ;
-: bm-all ( -- ) 250 mil bm-while bb 30 bm-fib ;
+: bm-all ( -- ) 250 mil bm-while bb 35 bm-fib ;
 
 ( simple fixed point )
 : f. ( n-- )    100 /mod (.) '.' emit abs 2 10 .nwb ;
 : f* ( a b--c ) * 100 / ;
 : f/ ( a b--c ) swap 100 * swap / ;
-: f+ ( a b--c ) + ; inline
-: f- ( a b--c ) - ; inline
+: f+ ( a b--c ) + ;
+: f- ( a b--c ) - ;
 
 ( Random numbers )
 val seed@   (val) t2
@@ -48,25 +48,6 @@ val seed@   (val) t2
 
 : rand-max ( max--n ) random abs swap mod ;
 timer seed!
-
-( A normal or circular stack )
-16 cells var tstk      ( the stack start )
-vhere cell - const t9  ( t9 is the stack end )
-val tsp@   (val) t1    ( the stack pointer )
-: tsp! ( n-- ) t1 ! ;  ( set the stack pointer )
-tstk tsp!              ( Initialize )
-( for a normal stack, use these definitions )
-( : tsp++ [ -- ] tsp@ cell + t9   min tsp! ; )
-( : tsp-- [ -- ] tsp@ cell - tstk max tsp! ; )
-( for a circular stack, use these definitions )
-: tsp++ ( -- )  tsp@ cell +  dup t9   > if drop tstk then tsp! ;
-: tsp-- ( -- )  tsp@ cell -  dup tstk < if drop t9   then tsp! ;
-: t!    ( n-- ) tsp@ ! ;
-: t@    ( --n ) tsp@ @ ;
-: >t    ( n-- ) tsp++ t! ;
-: t>    ( --n ) tsp@ @  tsp-- ;
-: t6    ( -- )  dup tsp@ = if ." sp:" then dup @ . cell + ;
-: .tstk ( -- )  '(' emit space tstk 16 for t6 next drop ')' emit ;
 
 ( ANSI color codes )
 : csi  27 emit '[' emit ;
@@ -86,6 +67,6 @@ tstk tsp!              ( Initialize )
     yellow ."   Memory: " white mem-sz . ." bytes." cr
     yellow ."     Code: " white vars mem - cell / . ." cells, used: " here . cr
     yellow ."     Vars: " white last vars - . ." bytes, used: " vhere vars - . cr
-    yellow ."     Dict: " white dict-end last - .  ." bytes used" cr 
+    yellow ."     Dict: " white dict-end last - .  ." bytes used" cr
     ." hello." cr ;
 .banner

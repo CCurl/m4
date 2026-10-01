@@ -2,7 +2,7 @@
 
 #ifndef __M4_H__
 
-#define VERSION         20260915
+#define VERSION         20261001
 
 #ifdef _MSC_VER
     #define _CRT_SECURE_NO_WARNINGS
@@ -22,8 +22,6 @@
 
 #define MEM_SZ         0x1000000 // 16MB
 #define STK_SZ                63
-#define IMMED               0x80
-#define INLINE              0x40
 #define CELL_SZ                4
 #define byte             uint8_t
 #define cell             int32_t
@@ -35,7 +33,8 @@
 #define L1            lstk[lsp-1]
 #define L2            lstk[lsp-2]
 
-enum { INTERPRET=0, COMPILE=1, BYE=999 };
+enum { INTERPRET=0, COMPILE=1, BYE=999, INLINE=0x40, IMMED=0x80 };
+enum { LIT_MASK=0x40000000, LIT_BITS=0x3FFFFFFF };
 typedef struct { ucell xt; byte sz; byte fl; byte ln; char nm[1]; } DE_T;
 typedef struct { char *name; ucell value; } NVP_T;
 
@@ -53,6 +52,7 @@ extern char mem[];
 // m4-vm.c needs these to be defined
 extern void zType(const char *str);
 extern void emit(const char ch);
+extern void ttyMode(int isRaw);
 extern int  key();
 extern int  qKey();
 extern cell timer();

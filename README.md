@@ -2,19 +2,20 @@
 
 m4 is an extremely minimal Forth system that can run stand-alone or be embedded into another program.
 
-m4 has 32 core primitives and 13 system primitives (#0-44).<br/>
+m4 has 45 primitives: 32 core (#0-31) and 13 system (#32-44).<br/>
 m4 is implemented in 3 files: (m4-vm.c, m4-vm.h, system.c). <br/>
-The VM itself is 163 lines of code.
+The VM itself is 171 lines of code.
 
-On Windows, a 32-bit Release build compiles to a 17k executable. <br/>
-On a Linux box, it is about 20k.
+On Windows, a Release build compiles to a 17k executable. <br/>
+On a Linux box, it is about 21k.
 
 **m4** is a DWord-Code system, inspired by Tachyon. <br/>
 In a m4 program, each instruction is a DWORD (32-bits). <br/>
 - If <= the last primitive (44), then it is a primitive.
+- Else, if bit 30 is on ($40000000), it is a number masked with ($3FFFFFFF),
 - Else, it is the XT (code address) of a word in the dictionary.
 
-### m4 hard-codes the following IMMEDIATE state-change words:
+## m4 hard-codes the following IMMEDIATE state-change words:
 
 | Word | Action |
 |:--   |:-- |
@@ -23,6 +24,20 @@ In a m4 program, each instruction is a DWORD (32-bits). <br/>
 
 **NOTE**: '(' skip words until the next ')' word.<br/>
 **NOTE**: State '999' signals m4 to exit. `: bye 999 state ! ;`<br/>
+
+## INLINE words
+
+An INLINE word is somewhat similar to a macro in other languages.<br/>
+When a word is INLINE, its definition is copied to the target, up to the first `EXIT`.<br/>
+When not INLINE, a call is made to the word instead.<br/>
+**NOTE**: if the next instruction is `EXIT`, it becomes a `JUMP` instead (the tail-call optimization).<br/>
+
+## Transient words
+
+Words 't0' through 't9' are transient and are not added to the dictionary.<br/>
+They are **case sensitive** - 't0' is a transient word, 'T0' is not.<br/>
+They help with factoring code and keep the dictionary uncluttered.<br/>
+They can be reused as many times as desired.<br/>
 
 ## m4 Startup Behavior
 
@@ -63,13 +78,13 @@ On startup, m4 does the following:
 |  19       | +        | (a b--c)     | TOS = NOS+TOS. Discard NOS. |
 |  20       | -        | (a b--c)     | TOS = NOS-TOS. Discard NOS. |
 |  21       | /mod     | (a b--r q)   | TOS = NOS/TOS. NOS = NOS modulo TOS. |
-|  22       | <        | (a b--f)     | If (NOS<TOS) then TOS = -1 else TOS = 0. Discard NOS. |
-|  23       | =        | (a b--f)     | If (NOS=TOS) then TOS = -1 else TOS = 0. Discard NOS. |
-|  24       | >        | (a b--f)     | If (NOS<TOS) then TOS = -1 else TOS = 0. Discard NOS. |
+|  22       | <        | (a b--f)     | If (NOS < TOS) then TOS = -1 else TOS = 0. Discard NOS. |
+|  23       | =        | (a b--f)     | If (NOS = TOS) then TOS = -1 else TOS = 0. Discard NOS. |
+|  24       | >        | (a b--f)     | If (NOS < TOS) then TOS = -1 else TOS = 0. Discard NOS. |
 |  25       | +!       | (n a--)      | Add NOS to the cell at TOS. Discard TOS and NOS. |
-|  26       | for      | (N--)        | Start a FOR loop starting at 0. Upper limit is N. |
+|  26       | for      | (N--)        | Start a FOR loop starting at 0. Upper limit is (N-1). |
 |  27       | i        | (--I)        | Push current loop index. |
-|  28       | next     | (--)         | Increment I. If I < N then jump to loop start. |
+|  28       | next     | (--)         | Increment I. If (I < N) then jump to loop start. |
 |  29       | and      | (a b--c)     | TOS = NOS and TOS. Discard NOS. |
 |  30       | or       | (a b--c)     | TOS = NOS or  TOS. Discard NOS. |
 |  31       | xor      | (a b--c)     | TOS = NOS xor TOS. Discard NOS. |
@@ -100,8 +115,8 @@ On startup, m4 does the following:
 | lstk      | (--a) | Address of the loop stack. |
 | (rsp)     | (--a) | Address of the return stack pointer. |
 | rstk      | (--a) | Address of the return stack. |
-| (sp)      | (--a) | Address of the data stack pointer. |
-| stk       | (--a) | Address of the data stack. |
+| (dsp)     | (--a) | Address of the data stack pointer. |
+| dstk      | (--a) | Address of the data stack. |
 | mem       | (--a) | Address of the beginning of the memory area. |
 | mem-sz    | (--n) | The number of BYTEs in the memory area. |
 | state     | (--a) | Address of STATE. |
